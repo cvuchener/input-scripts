@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<node>
+	<interface name="com.github.cvuchener.InputScripts.Script">
+		<property name="driver" type="s" access="read" />
+		<property name="name" type="s" access="read" />
+		<property name="serial" type="s" access="read" />
+		<property name="file" type="s" access="readwrite" />
+	</interface>
+</node>

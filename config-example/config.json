@@ -1,0 +1,13 @@
+{
+	"library_scripts": {
+		"Remapper": "scripts/remapper.js",
+		"ButtonMap": "scripts/button-map.js",
+		"SteamControllerFF": "scripts/sc-ff.js"
+	},
+	"default_scripts": [
+		{
+			"driver": "steamcontroller",
+			"file": "scripts/sc-default.js"
+		}
+	]
+}
