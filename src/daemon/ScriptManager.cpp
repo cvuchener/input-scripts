@@ -25,6 +25,8 @@
 
 constexpr char ScriptManager::DBusObjectPath[];
 
+using com::github::cvuchener::InputScripts::Script_adaptor;
+
 ScriptManager::ScriptManager (DBus::Connection &dbus_connection, const std::map<std::string, Driver *> *drivers):
 	DBus::ObjectAdaptor (dbus_connection, DBusObjectPath),
 	_dbus_connection (dbus_connection),
@@ -45,6 +47,21 @@ ScriptManager::~ScriptManager ()
 	}
 }
 
+static std::map<std::string, std::map<std::string, DBus::Variant>> getScriptProperties (Script *script)
+{
+	DBus::IntrospectedInterface *script_interface = script->Script_adaptor::introspect ();
+
+	std::map<std::string, std::map<std::string, DBus::Variant>> object_properties;
+
+	auto &interface = object_properties[script_interface->name];
+	for (const auto *property = script_interface->properties; property->name; ++property) {
+		DBus::MessageIter m = interface[property->name].writer ();
+		DBus::Variant *variant = script->Script_adaptor::get_property (property->name);
+		m << *variant;
+	}
+	return object_properties;
+}
+
 void ScriptManager::addDevice (InputDevice *device)
 {
 	static int next_device = 0;
@@ -58,6 +75,9 @@ void ScriptManager::addDevice (InputDevice *device)
 	path << DBusObjectPath << "/" << name.str ();
 	Script *script = new Script (_dbus_connection, path.str (), device);
 	_scripts.emplace (device, script);
+
+	InterfacesAdded (path.str (), getScriptProperties (script));
+
 	script->start ();
 }
 
@@ -68,36 +88,23 @@ void ScriptManager::removeDevice (InputDevice *device)
 		     << device->name () << "/"
 		     << device->serial () << std::endl;
 	Script *script = _scripts[device];
+
+	DBus::Path path = script->path ();
+	std::string interface_name = script->Script_adaptor::introspect ()->name;
+
 	script->stop ();
 	delete script;
 	_scripts.erase (device);
+
+	InterfacesRemoved (path, { interface_name });
 }
 
 std::map<DBus::Path, std::map<std::string, std::map<std::string, DBus::Variant>>> ScriptManager::GetManagedObjects ()
 {
-	using com::github::cvuchener::InputScripts::Script_adaptor;
 	std::map<DBus::Path, std::map<std::string, std::map<std::string, DBus::Variant>>> objects;
 	for (auto pair: _scripts) {
 		Script *script = pair.second;
-		Log::debug () << "Object = " << script->path () << std::endl;
-		auto &object = objects[script->path ()];
-		DBus::IntrospectedInterface *script_interface = script->Script_adaptor::introspect ();
-		Log::debug () << "Interface = " << script_interface->name << std::endl;
-		auto &interface = object[script_interface->name];
-		const DBus::IntrospectedProperty *property = script_interface->properties;
-		for (; property->name; ++property) {
-			//if (std::string (property->name) == "file")
-			//	continue;
-			//Log::debug () << "Property: " << property->name << " = " << script->Script_adaptor::get_property (property->name)->operator std::string () << std::endl;
-			Log::debug () << "Property: " << property->name << " (" << property->type << ")" << std::endl;
-			DBus::MessageIter m = interface[property->name].writer ();
-			//DBus::MessageIter var = m.new_variant (property->type);
-			DBus::Variant *oldvar = script->Script_adaptor::get_property (property->name);
-			m << *oldvar;
-			//oldvar->reader ().copy_data (var);
-			//var.append_string (oldvar->reader ().get_string ());
-			//m.close_container (var);
-		}
+		objects.emplace (script->path (), getScriptProperties (script));
 	}
 	return objects;
 }
