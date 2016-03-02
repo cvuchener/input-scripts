@@ -88,7 +88,6 @@ SteamControllerReceiver::SteamControllerReceiver (const std::string &path)
 	case 0x1102: // Wired controller
 		_connected = true;
 		_device = new SteamControllerDevice (this);
-		connected ();
 		break;
 
 	case 0x1142: // Wireless receiver
@@ -115,6 +114,10 @@ SteamControllerReceiver::~SteamControllerReceiver ()
 
 void SteamControllerReceiver::monitor ()
 {
+	// Send connected signal for already connected devices
+	if (_connected)
+		connected ();
+
 	int ret;
 	int nfds = std::max (_fd, _pipe[0]) + 1;
 	fd_set fds;
