@@ -82,6 +82,10 @@
 
 },
 
+"finalize": function () {
+	this.uinput.destroy ();
+},
+
 "event": function (type, code, value) {
 	switch (type) {
 	case EV_KEY:

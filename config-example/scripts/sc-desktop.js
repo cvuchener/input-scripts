@@ -67,6 +67,7 @@
 },
 
 "finalize": function () {
+	this.uinput.destroy ();
 },
 
 "touchButton": function (left, type, code, value, pressed) {

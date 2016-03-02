@@ -79,6 +79,10 @@ function inverse (value) {
 			event: this.touchButton.bind (this, true, EV_ABS, ABS_HAT0Y, 1)}]);
 },
 
+"finalize": function () {
+	this.uinput.destroy ();
+},
+
 "touchButton": function (left, type, code, value, pressed) {
 	input.hapticFeedback (left, 0x8000, 0, 1);
 	if (pressed)
