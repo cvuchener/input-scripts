@@ -61,9 +61,9 @@ void Thread::exec ()
 
 static void errorReporter (JSContext *cx, const char *message, JSErrorReport *report)
 {
-	Log::error ()
-		<< report->filename << ":" << report->lineno << ": "
-		<< message << std::endl;
+	Log::error () << (report->filename ? report->filename : "-" ) << ":"
+		      << report->lineno << ": "
+		      << message << std::endl;
 }
 
 void Thread::run ()

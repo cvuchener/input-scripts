@@ -79,6 +79,7 @@ void Log::printf (const char *format, ...)
 	str = new char[len];
 	vsnprintf (str, len, format, args);
 	*this << std::string (str, len);
+	flush ();
 	delete str;
 	va_end (args);
 }
@@ -91,6 +92,6 @@ Log::LogBuf::LogBuf (const std::string &prefix):
 int Log::LogBuf::sync ()
 {
 	std::cerr << "[" << _prefix << "] " << str ();
-	str ("");
+	str (std::string ());
 	return 0;
 }
