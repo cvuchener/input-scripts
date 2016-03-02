@@ -64,8 +64,7 @@ Log &Log::log (Log::Level level)
 			return _debug;
 		}
 	}
-	else
-		return _null;
+	return _null;
 }
 
 void Log::printf (const char *format, ...)
