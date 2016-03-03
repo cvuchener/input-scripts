@@ -1,5 +1,4 @@
-({
-"init":	function () {
+function init () {
 	input.disableKeys ();
 	input.setSetting (input.SettingTrackBall, input.TrackBallOff);
 
@@ -80,13 +79,13 @@
 		{ type: EV_ABS, code: input.AbsRightTrigger, new_code: ABS_BRAKE },
 	]);
 
-},
+}
 
-"finalize": function () {
+function finalize () {
 	this.uinput.destroy ();
-},
+}
 
-"event": function (type, code, value) {
+function event (type, code, value) {
 	switch (type) {
 	case EV_KEY:
 	case EV_ABS:
@@ -97,4 +96,3 @@
 		this.uinput.sendSyn (code);
 	}
 }
-})

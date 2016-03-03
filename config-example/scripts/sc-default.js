@@ -1,12 +1,10 @@
-({
-"init": function () {
+function init () {
 	input.enableKeys ();
 	input.setSetting (input.SettingTrackBall, input.TrackBallOn);
-},
-
-"finalize": function () {
-},
-
-"event": function (type, code, value) {
 }
-})
+
+function finalize () {
+}
+
+function event (type, code, value) {
+}

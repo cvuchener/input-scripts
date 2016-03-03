@@ -1,5 +1,4 @@
-({
-"init": function (uinput) {
+function init (uinput) {
 	uinput.setFF (FF_PERIODIC);
 	uinput.setFF (FF_SINE);
 	uinput.setFF (FF_SQUARE);
@@ -15,16 +14,16 @@
 
 	this.gain = 1.0;
 	uinput.setFFSetGain (function (gain) { this.gain = gain / 0xFFFF; }.bind (this));
-},
+}
 
-"uploadEffect": function (id, effect) {
+function uploadEffect (id, effect) {
 	this.effects[id] = effect;
-},
+}
 
-"eraseEffect": function (id) {
-},
+function eraseEffect (id) {
+}
 
-"startEffect": function (id) {
+function startEffect (id) {
 	var effect = this.effects[id];
 	effect.playing = true;
 	switch (effect.type) {
@@ -41,9 +40,9 @@
 		}.bind (this), effect.replay_delay);
 		break;
 	}
-},
+}
 
-"playPeriodicEffect": function (id, time) {
+function playPeriodicEffect (id, time) {
 	var effect = this.effects[id];
 	if (!effect.playing || time > effect.replay_length)
 		return;
@@ -61,9 +60,8 @@
 	input.hapticFeedback (false, magnitude * this.gain, 0, 1);
 	system.setTimeout (this.playPeriodicEffect.bind (this, id, time+effect.period), effect.period);
 	
-},
+}
 
-"stopEffect": function (id) {
+function stopEffect (id) {
 	this.effects[id].playing = false;
 }
-})

@@ -103,7 +103,7 @@ void Script::readInputEvents (JSContext *cx, JS::HandleObject script_object)
 	execOnJsThreadAsync ([] () {}); // Wake up the script thread
 }
 
-static void getScriptObject (JSContext *cx, JS::AutoObjectVector &scope_chain, JS::MutableHandleObject object, std::string filename)
+static JSObject *getScriptObject (JSContext *cx, std::string filename)
 {
 	std::string filepath;
 	std::string script;
@@ -122,14 +122,13 @@ static void getScriptObject (JSContext *cx, JS::AutoObjectVector &scope_chain, J
 	std::u16string utf16 = utf16cvt.from_bytes (script.data ());
 	JS::SourceBufferHolder src_buf (utf16.data (), utf16.size (), JS::SourceBufferHolder::NoOwnership);
 
+	JS::AutoObjectVector scope_chain (cx);
+	scope_chain.append (JS_NewObject (cx, nullptr));
 	JS::RootedValue rval (cx);
 	if (!JS::Evaluate (cx, scope_chain, compileOptions, src_buf, &rval)) {
 		throw std::runtime_error ("Script evaluation failed");
 	}
-
-	if (!rval.isObject ())
-		throw std::runtime_error ("Script result must be an object");
-	object.set (rval.toObjectOrNull ());
+	return scope_chain.popCopy ();
 }
 
 void Script::run (JSContext *cx)
@@ -143,9 +142,6 @@ void Script::run (JSContext *cx)
 	}
 
 	JSAutoCompartment ac (cx, global);
-
-	JS::AutoObjectVector global_scope (cx);
-	global_scope.append (global);
 
 	// Init classes
 
@@ -186,17 +182,15 @@ void Script::run (JSContext *cx)
 
 	// Library scripts
 	for (auto pair: Config::config.library_scripts) {
-		JS::RootedObject lib (cx);
 		try {
-			getScriptObject (cx, global_scope, &lib, pair.second);
+			JS::RootedObject lib (cx, getScriptObject (cx, pair.second));
+			JS_DefineProperty (cx, global, pair.first.c_str (), lib, JSPROP_ENUMERATE);
 		}
 		catch (std::exception &e) {
 			Log::error () << "Loading library script "
 				      << pair.first << " (" << pair.second
 				      << ") failed: " << e.what () << std::endl;
-			continue;
 		}
-		JS_DefineProperty (cx, global, pair.first.c_str (), lib, JSPROP_ENUMERATE);
 	}
 
 	// Create InputEvent JS object
@@ -207,7 +201,7 @@ void Script::run (JSContext *cx)
 	// Execute user script and retrieve the prototype
 	JS::RootedObject script_proto (cx);
 	try {
-		getScriptObject (cx, global_scope, &script_proto, _filename);
+		script_proto = getScriptObject (cx, _filename);
 	}
 	catch (std::exception &e) {
 		Log::error () << "Failed to load script " << _filename

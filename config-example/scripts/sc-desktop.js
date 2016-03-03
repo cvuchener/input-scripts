@@ -1,5 +1,4 @@
-({
-"init":	function () {
+function init () {
 	input.disableKeys ();
 	input.setSetting (input.SettingTrackBall, input.TrackBallOn);
 
@@ -64,26 +63,26 @@
 	this.scroll_wheel = Object.create (ScrollWheel);
 	this.scroll_wheel.init (this.scrollWheelEvent.bind (this));
 
-},
+}
 
-"finalize": function () {
+function finalize () {
 	this.uinput.destroy ();
-},
+}
 
-"touchButton": function (left, type, code, value, pressed) {
+function touchButton (left, type, code, value, pressed) {
 	input.hapticFeedback (left, 0x8000, 0, 1);
 	if (pressed)
 		this.uinput.sendEvent (type, code, value);
 	else
 		this.uinput.sendEvent (type, code, 0);
-},
+}
 
-"scrollWheelEvent": function (steps) {
-	input.hapticFeedback (true, 0x8000, 10000, Math.abs (steps));
+function scrollWheelEvent (steps) {
+	input.hapticFeedback (true, 0x800, 10000, Math.abs (steps));
 	this.uinput.sendEvent (EV_REL, REL_WHEEL, steps);
-},
+}
 
-"event": function (type, code, value) {
+function event (type, code, value) {
 	switch (type) {
 	case EV_KEY:
 		if (code == input.BtnTouchLeft) {
@@ -109,4 +108,3 @@
 		this.uinput.sendSyn (code);
 	}
 }
-})

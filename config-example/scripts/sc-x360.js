@@ -2,8 +2,7 @@ function inverse (value) {
 	return -value;
 }
 
-({
-"init":	function () {
+function init () {
 	input.disableKeys ();
 	input.setSetting (input.SettingTrackBall, input.TrackBallOff);
 
@@ -60,7 +59,7 @@ function inverse (value) {
 			new_code: ABS_X },
 		{ type: EV_ABS, code: input.AbsLeftY,
 			modifiers: [{ type: EV_KEY, code: input.BtnTouchLeft, max: 0 }],
-			new_code: ABS_Y, transform: inverse },
+			new_code: ABS_Y, transform: this.inverse },
 		{ type: EV_ABS, code: input.AbsRightX, new_code: ABS_RX },
 		{ type: EV_ABS, code: input.AbsRightY, new_code: ABS_RY },
 		{ type: EV_ABS, code: input.AbsLeftTrigger, new_code: ABS_Z },
@@ -77,21 +76,21 @@ function inverse (value) {
 			event: this.touchButton.bind (this, true, EV_ABS, ABS_HAT0X, -1)},
 		{ type: "polar", min_r: "8192", min_angle: -150, max_angle: -30,
 			event: this.touchButton.bind (this, true, EV_ABS, ABS_HAT0Y, 1)}]);
-},
+}
 
-"finalize": function () {
+function finalize () {
 	this.uinput.destroy ();
-},
+}
 
-"touchButton": function (left, type, code, value, pressed) {
+function touchButton (left, type, code, value, pressed) {
 	input.hapticFeedback (left, 0x8000, 0, 1);
 	if (pressed)
 		this.uinput.sendEvent (type, code, value);
 	else
 		this.uinput.sendEvent (type, code, 0);
-},
+}
 
-"event": function (type, code, value) {
+function event (type, code, value) {
 	if (type == EV_KEY && code == input.BtnClickLeft && value == 0 &&
 	    input.getValue (EV_KEY, input.BtnTouchLeft) == 1) {
 		this.dpad.release ();
@@ -111,4 +110,3 @@ function inverse (value) {
 		this.uinput.sendSyn (code);
 	}
 }
-})

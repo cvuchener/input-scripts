@@ -1,5 +1,4 @@
-({
-"init": function (input, uinput, mapping) {
+function init (input, uinput, mapping) {
 	this.input = input;
 	this.uinput = uinput;
 	this.mapping = {};
@@ -25,16 +24,16 @@
 		new_ev.state = this.testEvent (new_ev);
 		this.mapping[ev.type][ev.code].push (new_ev);
 	}.bind (this));
-},
+}
 
-"processEvent": function (event, value) {
+function processEvent (event, value) {
 	var new_value = value;
 	if (event.hasOwnProperty ("transform"))
 		new_value = event.transform (value);
 	this.uinput.sendEvent (event.new_type, event.new_code, new_value);
-},
+}
 
-"testEvent": function (event) {
+function testEvent (event) {
 	if (event.hasOwnProperty ("modifiers")) {
 		for (var i = 0; i < event.modifiers.length; ++i) {
 			var mod = event.modifiers[i];
@@ -46,9 +45,9 @@
 		}
 	}
 	return true;
-},
+}
 
-"event": function (type, code, value) {
+function event (type, code, value) {
 	if (this.mapping.hasOwnProperty (type)) {
 		if (this.mapping[type].hasOwnProperty (code)) {
 			this.mapping[type][code].forEach (function (ev) {
@@ -78,4 +77,3 @@
 		}
 	}
 }
-})

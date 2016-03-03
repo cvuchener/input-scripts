@@ -1,12 +1,11 @@
-({
-"step": 15,
+var step = 30;
 
-"init": function (event_handler) {
+function init (event_handler) {
 	this.pressed = false;
 	this.event = event_handler;
-},
+}
 
-"updatePos": function (x, y) {
+function updatePos (x, y) {
 	var angle = 0;
 	if (x != 0)
 		angle = Math.atan (y/x) + Math.PI * (1 - Math.sign (x))/2;
@@ -33,9 +32,8 @@
 		this.remainder = diff - steps * this.step;
 		this.last_angle = angle;
 	}
-},
+}
 
-"release": function (x, y) {
+function release (x, y) {
 	this.pressed = false;
 }
-})

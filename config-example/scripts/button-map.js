@@ -1,14 +1,13 @@
-({
-"init": function (map) {
+function init (map) {
 	this.map = [];
 	map.forEach (function (elem) {
 		var region = { state: false };
 		Object.assign (region, elem);
 		this.map.push (region);
 	}.bind (this));
-},
+}
 
-"updatePos": function (x, y) {
+function updatePos (x, y) {
 	this.map.forEach (function (region) {
 		var new_state = true;
 		switch (region.type) {
@@ -59,14 +58,13 @@
 			region.state = new_state;
 		}
 	});
-},
+}
 
-"release": function () {
+function release () {
 	this.map.forEach (function (region) {
 		if (region.state) {
 			region.event (false);
 			region.state = false;
 		}
 	});
-},
-})
+}
