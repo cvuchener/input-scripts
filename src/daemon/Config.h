@@ -28,8 +28,6 @@ class Config
 public:
 	bool loadConfig (const std::string &filename);
 
-	std::map<std::string, std::string> library_scripts;
-
 	struct ScriptRule
 	{
 		std::map<std::string, std::string> rules;

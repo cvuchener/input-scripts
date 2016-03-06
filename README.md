@@ -29,19 +29,13 @@ Configuration
 
 Configuration files can be passed with absolute or relative paths. Relative paths are searched in `$XDG_CONFIG_HOME/input-scripts` (or `$HOME/.config/input-scripts`) and then in `/etc/input-scripts/`.
 
-`input-scripts` configuration is a JSON file with two properties:
- - `library_scripts` is a dictionary of helpers scripts that will always be loaded.
+`input-scripts` configuration is a JSON file with the following properties:
  - `default_scripts` is an array of rules for loading the default script when a new device is added. Each rule must have a `file` property with the script file name and optional matching rules: `driver`, `name`, `serial`.
 
-Here is an example configuration file loading three helper scripts and setting `scripts/sc-default.js` as the default script for Steam Controller ans `scripts/catch-all.js` for all others.
+Here is an example configuration file setting `scripts/sc-default.js` as the default script for Steam Controller ans `scripts/catch-all.js` for all others.
 
 ```
 {
-	"library_scripts": {
-		"Remapper": "scripts/remapper.js",
-		"ButtonMap": "scripts/button-map.js",
-		"SteamControllerFF": "scripts/sc-ff.js"
-	},
 	"default_scripts": [
 		{
 			"driver": "steamcontroller",
@@ -91,6 +85,7 @@ Every script must contains at least three methods:
 The scope object from the script is used as a prototype to create a script object (the functions are called as this object's methods).
 
 Some global variables are created:
+ - `importScript`: a function for importing other scripts. The scope object is returned after executing the script.
  - `input`: this is the input device object, its class may vary depending on the driver.
  - `system`: provides some useful functions for interacting with the system.
 

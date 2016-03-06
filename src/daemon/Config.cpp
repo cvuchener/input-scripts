@@ -54,17 +54,6 @@ bool Config::loadConfig (const std::string &filename)
 			      << reader.getFormattedErrorMessages () << std::endl;
 		return false;
 	}
-	if (config_json.isMember ("library_scripts")) {
-		Json::Value library_scripts_json = config_json["library_scripts"];
-		if (!library_scripts_json.isObject ()) {
-			Log::error () << "library_scripts must be an object." << std::endl;
-			goto library_scripts_end;
-		}
-		for (const auto &key: library_scripts_json.getMemberNames ()) {
-			library_scripts.emplace (key, library_scripts_json[key].asString ());
-		}
-	}
-library_scripts_end:
 	if (config_json.isMember ("default_scripts")) {
 		Json::Value default_scripts_json = config_json["default_scripts"];
 		if (!default_scripts_json.isArray ()) {

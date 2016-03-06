@@ -1,3 +1,6 @@
+SteamControllerFF = importScript ("imports/sc-ff.js");
+Remapper = importScript ("imports/remapper.js");
+
 function init () {
 	input.disableKeys ();
 	input.setSetting (input.SettingTrackBall, input.TrackBallOff);

@@ -1,3 +1,7 @@
+Remapper = importScript ("imports/remapper.js");
+ButtonMap = importScript ("imports/button-map.js");
+ScrollWheel = importScript ("imports/scroll-wheel.js");
+
 function init () {
 	input.disableKeys ();
 	input.setSetting (input.SettingTrackBall, input.TrackBallOn);

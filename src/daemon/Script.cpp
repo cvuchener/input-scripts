@@ -131,6 +131,27 @@ static JSObject *getScriptObject (JSContext *cx, std::string filename)
 	return scope_chain.popCopy ();
 }
 
+static bool importJSScript (JSContext *cx, unsigned int argc, JS::Value *vp)
+{
+	JS::CallArgs jsargs = JS::CallArgsFromVp (argc, vp);
+	std::string filename;
+	try {
+		JsHelpers::readJSValue (cx, filename, jsargs.get (0));
+	}
+	catch (std::invalid_argument &e) {
+		JS_ReportError (cx, "Invalid argument: %s", e.what ());
+		return false;
+	}
+	try {
+		jsargs.rval ().setObject (*getScriptObject (cx, filename));
+	}
+	catch (std::exception &e) {
+		JS_ReportError (cx, "Script error : %s", e.what ());
+		return false;
+	}
+	return true;
+}
+
 void Script::run (JSContext *cx)
 {
 	JSAutoRequest ar (cx);
@@ -150,6 +171,8 @@ void Script::run (JSContext *cx)
 		throw std::runtime_error ("JS_InitStandardClasses");
 	}
 
+	// import function
+	JS_DefineFunction (cx, global, "importScript", importJSScript, 1, JSPROP_READONLY | JSPROP_PERMANENT);
 	// C++ classes
 	UInput::JsClass uinput_class (cx, global, JS::NullPtr ());
 
@@ -177,19 +200,6 @@ void Script::run (JSContext *cx)
 				continue;
 			value.setNumber (static_cast<uint32_t> (code));
 			JS_DefineProperty (cx, global, name, value, JSPROP_ENUMERATE | JSPROP_READONLY | JSPROP_PERMANENT);
-		}
-	}
-
-	// Library scripts
-	for (auto pair: Config::config.library_scripts) {
-		try {
-			JS::RootedObject lib (cx, getScriptObject (cx, pair.second));
-			JS_DefineProperty (cx, global, pair.first.c_str (), lib, JSPROP_ENUMERATE);
-		}
-		catch (std::exception &e) {
-			Log::error () << "Loading library script "
-				      << pair.first << " (" << pair.second
-				      << ") failed: " << e.what () << std::endl;
 		}
 	}
 

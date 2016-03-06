@@ -1,10 +1,4 @@
 {
-	"library_scripts": {
-		"Remapper": "scripts/remapper.js",
-		"ButtonMap": "scripts/button-map.js",
-		"ScrollWheel": "scripts/scroll-wheel.js",
-		"SteamControllerFF": "scripts/sc-ff.js"
-	},
 	"default_scripts": [
 		{
 			"driver": "steamcontroller",

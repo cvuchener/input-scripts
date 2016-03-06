@@ -1,3 +1,7 @@
+SteamControllerFF = importScript ("imports/sc-ff.js");
+Remapper = importScript ("imports/remapper.js");
+ButtonMap = importScript ("imports/button-map.js");
+
 function inverse (value) {
 	return -value;
 }
