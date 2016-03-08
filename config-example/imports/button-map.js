@@ -1,3 +1,5 @@
+const Geometry = importScript ("imports/geometry.js");
+
 function init (map) {
 	this.map = [];
 	map.forEach (function (elem) {
@@ -23,14 +25,8 @@ function updatePos (x, y) {
 			break;
 
 		case "polar":
-			var r = Math.sqrt (x*x + y*y);
-			var angle = 0;
-			if (x != 0)
-				angle = Math.atan (y/x);
-			else
-				angle = Math.PI/2 * Math.sign (y);
-			angle += Math.PI * (1 - Math.sign (x))/2;
-			angle *= 180/Math.PI;
+			var r = Geometry.length ([x, y]);
+			var angle = Geometry.angle ([x, y]) * 180/Math.PI;
 			if (region.hasOwnProperty ("min_r"))
 				new_state &= r >= region.min_r;
 			if (region.hasOwnProperty ("max_x"))
@@ -48,9 +44,7 @@ function updatePos (x, y) {
 			break;
 
 		case "circle":
-			var dx = x - region.center_x;
-			var dy = y - region.center_y;
-			new_state = Math.sqrt (dx*dx + dy*dy) < region.radius;
+			new_state = Geometry.length ([x - region.center_x, y - region.center_y]) < region.radius;
 			break;
 		}
 		if (new_state != region.state) {

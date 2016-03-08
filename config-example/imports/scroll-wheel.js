@@ -1,3 +1,5 @@
+const Geometry = importScript ("imports/geometry.js");
+
 var step = 30;
 
 function init (event_handler) {
@@ -6,12 +8,7 @@ function init (event_handler) {
 }
 
 function updatePos (x, y) {
-	var angle = 0;
-	if (x != 0)
-		angle = Math.atan (y/x) + Math.PI * (1 - Math.sign (x))/2;
-	else
-		angle = Math.PI/2 * Math.sign (y);
-	angle *= 180/Math.PI;
+	var angle = Geometry.angle ([x, y]);
 
 	if (!this.pressed) {
 		this.pressed = true;
@@ -19,11 +16,8 @@ function updatePos (x, y) {
 		this.remainder = 0;
 	}
 	else {
-		var diff = angle - this.last_angle
-		// Find the shortest difference between angle angle last_angle
-		var sign = Math.sign (diff);
-		while (Math.abs (diff) > Math.abs (diff-sign*360))
-			diff -= sign*360;
+		var diff = Geometry.shortestAngleDiff (angle, this.last_angle);
+		diff *= 180/Math.PI;
 
 		diff += this.remainder;
 		var steps = Math.floor (Math.abs (diff) / this.step) * Math.sign (diff);
