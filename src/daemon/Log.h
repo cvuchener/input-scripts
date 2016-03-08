@@ -23,10 +23,15 @@
 #include <sstream>
 #include <iomanip>
 #include <algorithm>
+#include <mutex>
 
 class Log: public std::ostream
 {
 public:
+	Log (const Log &) = delete;
+	Log (Log &&);
+	~Log ();
+
 	enum Level {
 		Error,
 		Warning,
@@ -37,12 +42,12 @@ public:
 	static void setLevel (Level level);
 	static Level level ();
 
-	static Log &log (Level level);
+	static Log log (Level level);
 
-	static inline Log &error () { return log (Error); }
-	static inline Log &warning () { return log (Warning); }
-	static inline Log &info () { return log (Info); }
-	static inline Log &debug () { return log (Debug); }
+	static inline Log error () { return log (Error); }
+	static inline Log warning () { return log (Warning); }
+	static inline Log info () { return log (Info); }
+	static inline Log debug () { return log (Debug); }
 
 	void printf (const char *format, ...)
 		__attribute__ ((format (printf, 2, 3)));
@@ -78,6 +83,7 @@ private:
 
 	static Level _level;
 	static Log _error, _warning, _info, _debug, _null;
+	static std::mutex _mutex;
 };
 
 #endif

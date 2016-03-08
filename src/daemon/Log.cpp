@@ -21,13 +21,11 @@
 #include <iostream>
 #include <cstdarg>
 #include <cstdio>
+#include <cstring>
 
 Log::Level Log::_level = Log::Error;
-Log Log::_null;
-Log Log::_error ("error");
-Log Log::_warning ("warning");
-Log Log::_info ("info");
-Log Log::_debug ("debug");
+
+std::mutex Log::_mutex;
 
 Log::Log ():
 	_buf ("null")
@@ -37,6 +35,16 @@ Log::Log ():
 Log::Log (const std::string &prefix):
 	std::ostream (&_buf),
 	_buf (prefix)
+{
+}
+
+Log::Log (Log &&log):
+	std::ostream (std::move (log)),
+	_buf (std::move (log._buf))
+{
+}
+
+Log::~Log ()
 {
 }
 
@@ -50,37 +58,44 @@ Log::Level Log::level ()
 	return _level;
 }
 
-Log &Log::log (Log::Level level)
+Log Log::log (Log::Level level)
 {
 	if (level <= _level) {
 		switch (level) {
 		case Error:
-			return _error;
+			return Log ("error");
 		case Warning:
-			return _warning;
+			return Log ("warning");
 		case Info:
-			return _info;
+			return Log ("info");
 		case Debug:
-			return _debug;
+			return Log ("debug");
 		}
 	}
-	return _null;
+	return Log ();
 }
 
 void Log::printf (const char *format, ...)
 {
-	char *str;
+	char *str, *current, *end;
 	int len;
 	if (!*this)
 		return;
-	va_list args;
+	va_list args, copy;
 	va_start (args, format);
-	len = vsnprintf (nullptr, 0, format, args);
-	str = new char[len];
-	vsnprintf (str, len, format, args);
-	*this << std::string (str, len);
-	flush ();
-	delete str;
+	va_copy (copy, args);
+	len = vsnprintf (nullptr, 0, format, copy);
+	str = new char[len+1];
+	vsnprintf (str, len+1, format, args);
+	current = str;
+	while (*current != '\0' && (end = strchr (current, '\n'))) {
+		*this << std::string (current, end) << std::endl;
+		current = end+1;
+	}
+	if (*current != '\0') {
+		*this << std::string (current);
+	}
+	delete[] str;
 	va_end (args);
 }
 
@@ -91,6 +106,7 @@ Log::LogBuf::LogBuf (const std::string &prefix):
 
 int Log::LogBuf::sync ()
 {
+	std::unique_lock<std::mutex> lock (_mutex);
 	std::cerr << "[" << _prefix << "] " << str ();
 	str (std::string ());
 	return 0;

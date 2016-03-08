@@ -80,12 +80,13 @@ static std::string toString (JSContext *cx, JS::HandleValue value)
 
 bool System::print (JSContext *cx, JS::CallArgs &args)
 {
+	Log log = Log::info ();
 	for (unsigned int i = 0; i < args.length (); ++i) {
 		if (i != 0)
 			Log::info () << ", ";
-		Log::info () << toString (cx, args.get (i));
+		log << toString (cx, args.get (i));
 	}
-	Log::info () << std::endl;
+	log << std::endl;
 	args.rval ().setNull ();
 	return true;
 }
@@ -145,9 +146,10 @@ static void print_r_impl (std::ostream &out, JSContext *cx, JS::HandleValue valu
 
 bool System::print_r (JSContext *cx, JS::CallArgs &args)
 {
+	Log log = Log::info ();
 	for (unsigned int i = 0; i < args.length (); ++i) {
-		print_r_impl (Log::info (), cx, args.get (i));
-		Log::info () << std::endl;
+		print_r_impl (log, cx, args.get (i));
+		log << std::endl;
 	}
 	args.rval ().setNull ();
 	return true;
