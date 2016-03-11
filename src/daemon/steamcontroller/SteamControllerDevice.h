@@ -45,11 +45,17 @@ public:
 	void setSetting (uint8_t setting, uint16_t value);
 	void enableKeys ();
 	void disableKeys ();
-	void hapticFeedback (bool left, uint16_t amplitude, uint16_t period, uint16_t count);
 	std::string querySerial ();
 	void setSounds (const std::vector<int8_t> &sounds);
 	void playSound (int id);
 	void shutdown ();
+
+	enum HapticActuator: uint8_t {
+		HapticLeft = 0x01,
+		HapticRight = 0x00
+	};
+
+	void hapticFeedback (uint8_t actuator, uint16_t amplitude, uint16_t period, uint16_t count);
 
 	virtual operator bool () const;
 

@@ -233,13 +233,10 @@ void SteamControllerDevice::disableKeys ()
 	_receiver->sendRequest (0x81, params);
 }
 
-void SteamControllerDevice::hapticFeedback (bool left, uint16_t amplitude, uint16_t period, uint16_t count)
+void SteamControllerDevice::hapticFeedback (uint8_t actuator, uint16_t amplitude, uint16_t period, uint16_t count)
 {
 	std::vector<uint8_t> params (7);
-	if (left)
-		params[0] = 1;
-	else
-		params[0] = 0;
+	params[0] = actuator;
 	writeLE (&params[1], amplitude);
 	writeLE (&params[3], period);
 	writeLE (&params[5], count);
@@ -302,6 +299,9 @@ const JSFunctionSpec SteamControllerDevice::js_fs[] = {
 
 #define DEFINE_CONSTANT(name) { #name, name }
 const std::pair<std::string, int> SteamControllerDevice::js_int_const[] = {
+	// enum HapticActuator
+	DEFINE_CONSTANT (HapticLeft),
+	DEFINE_CONSTANT (HapticRight),
 	// enum Setting
 	DEFINE_CONSTANT (SettingTrackBall),
 	DEFINE_CONSTANT (SettingTrackBallInertia),

@@ -27,7 +27,7 @@ function mouseMove (axis, d) {
 		this.mouse.sendRel (REL_Y, d);
 		break;
 	}
-	input.hapticFeedback (false, 0x40, 10000, Math.abs (d));
+	input.hapticFeedback (input.HapticRight, 0x40, 10000, Math.abs (d));
 }
 
 function finalize () {

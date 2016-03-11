@@ -73,21 +73,21 @@ function init () {
 	this.dpad = Object.create (ButtonMap);
 	this.dpad.init ([
 		{ type: "polar", min_r: "8192", min_angle: -60, max_angle: 60,
-			event: this.touchButton.bind (this, true, EV_ABS, ABS_HAT0X, 1)},
+			event: this.touchButton.bind (this, input.HapticLeft, EV_ABS, ABS_HAT0X, 1)},
 		{ type: "polar", min_r: "8192", min_angle: 30, max_angle: 150,
-			event: this.touchButton.bind (this, true, EV_ABS, ABS_HAT0Y, -1)},
+			event: this.touchButton.bind (this, input.HapticLeft, EV_ABS, ABS_HAT0Y, -1)},
 		{ type: "polar", min_r: "8192", min_angle: 120, max_angle: 240,
-			event: this.touchButton.bind (this, true, EV_ABS, ABS_HAT0X, -1)},
+			event: this.touchButton.bind (this, input.HapticLeft, EV_ABS, ABS_HAT0X, -1)},
 		{ type: "polar", min_r: "8192", min_angle: -150, max_angle: -30,
-			event: this.touchButton.bind (this, true, EV_ABS, ABS_HAT0Y, 1)}]);
+			event: this.touchButton.bind (this, input.HapticLeft, EV_ABS, ABS_HAT0Y, 1)}]);
 }
 
 function finalize () {
 	this.uinput.destroy ();
 }
 
-function touchButton (left, type, code, value, pressed) {
-	input.hapticFeedback (left, 0x8000, 0, 1);
+function touchButton (actuator, type, code, value, pressed) {
+	input.hapticFeedback (actuator, 0x8000, 0, 1);
 	if (pressed)
 		this.uinput.sendEvent (type, code, value);
 	else
