@@ -64,6 +64,7 @@ Script::Script (DBus::Connection &dbus_connection, std::string path, InputDevice
 		}
 		if (match) {
 			_filename = script.script_file;
+			Log::info () << "Default script is " << _filename << std::endl;
 			break;
 		}
 	}

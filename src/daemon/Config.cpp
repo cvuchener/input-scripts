@@ -54,35 +54,43 @@ bool Config::loadConfig (const std::string &filename)
 			      << reader.getFormattedErrorMessages () << std::endl;
 		return false;
 	}
-	if (config_json.isMember ("default_scripts")) {
-		Json::Value default_scripts_json = config_json["default_scripts"];
-		if (!default_scripts_json.isArray ()) {
-			Log::error () << "default_scripts must be an array" << std::endl;
-			goto default_script_end;
-		}
-		for (unsigned int i = 0; i < default_scripts_json.size (); ++i) {
-			Json::Value script = default_scripts_json[i];
-			default_scripts.emplace_back ();
-			if (!script.isMember ("file")) {
-				Log::error () << "default_scripts[" << i << "] need a \"file\" property." << std::endl;
-				default_scripts.pop_back ();
+	if (!config_json.isObject ()) {
+		Log::error () << "Configuration must be a JSON object" << std::endl;
+		return false;
+	}
+	for (const auto &key: config_json.getMemberNames ()) {
+		Json::Value value = config_json[key];
+		if (key == "default_scripts") {
+			if (!value.isArray ()) {
+				Log::error () << "default_scripts must be an array" << std::endl;
 				continue;
 			}
-			auto &last = default_scripts.back ();
-			last.script_file = script["file"].asString ();
-			Log::debug () << "Added rule for file: " << last.script_file << std::endl;
-			for (auto &rule: { "driver", "name", "serial" })
-				if (script.isMember (rule)) {
-					Log::debug () << rule << " = " << script[rule].asString () << std::endl;
-					last.rules.emplace (rule, script[rule].asString ());
+			for (unsigned int i = 0; i < value.size (); ++i) {
+				Json::Value script = value[i];
+				default_scripts.emplace_back ();
+				if (!script.isMember ("file")) {
+					Log::error () << "default_scripts[" << i << "] need a \"file\" property." << std::endl;
+					default_scripts.pop_back ();
+					continue;
 				}
+				auto &last = default_scripts.back ();
+				last.script_file = script["file"].asString ();
+				Log::debug () << "Added rule for file: " << last.script_file << std::endl;
+				for (auto &rule: { "driver", "name", "serial" })
+					if (script.isMember (rule)) {
+						Log::debug () << rule << " = " << script[rule].asString () << std::endl;
+						last.rules.emplace (rule, script[rule].asString ());
+					}
+			}
+		}
+		else {
+			Log::warning () << "Unknown setting: " << key << std::endl;
 		}
 	}
-	else {
+	if (default_scripts.empty ()) {
 		Log::warning () << "Missing default_scripts section in "
 				<< config_file_path << std::endl;
 	}
-default_script_end:
 	return true;
 }
 
