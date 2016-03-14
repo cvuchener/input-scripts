@@ -31,7 +31,7 @@ EventDevice::EventDevice (const std::string &path):
 	int ret;
 
 	Log::info () << "Opening event node: " << path << std::endl;
-	_fd = open (path.c_str (), O_RDWR | O_NONBLOCK);
+	_fd = open (path.c_str (), O_RDONLY | O_NONBLOCK | O_CLOEXEC);
 	if (!_fd) {
 		throw std::runtime_error ("Cannot open device");
 	}
@@ -39,7 +39,7 @@ EventDevice::EventDevice (const std::string &path):
 	if (ret != 0) {
 		throw std::runtime_error ("libevdev_new_from_fd failed");
 	}
-	if (-1 == pipe (_pipe)) {
+	if (-1 == pipe2 (_pipe, O_CLOEXEC)) {
 		throw std::runtime_error ("Failed to create pipe");
 	}
 }

@@ -34,6 +34,7 @@ public:
 	~System ();
 
 	void setTimeout (MTFunction<void ()> callback, unsigned int delay);
+	void exec (std::string filename, std::vector<std::string> args);
 	bool print (JSContext *cx, JS::CallArgs &args);
 	bool print_r (JSContext *cx, JS::CallArgs &args);
 

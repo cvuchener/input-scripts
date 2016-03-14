@@ -21,6 +21,12 @@
 #include "Log.h"
 #include "JsHelpers/Thread.h"
 
+extern "C" {
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/wait.h>
+}
+
 System::System (JsHelpers::Thread *js_thread):
 	_js_thread (js_thread)
 {
@@ -48,6 +54,69 @@ void System::setTimeout (MTFunction<void ()> callback, unsigned int delay)
 		});
 		return false;
 	});
+}
+
+void System::exec (std::string filename, std::vector<std::string> args)
+{
+	int ret, code, status;
+	int pipe[2];
+
+	Log log = Log::info ();
+	log << "Executing: " << filename << " (with args:";
+	for (const auto &arg: args)
+		log << " \"" << arg << "\"";
+	log << ")" << std::endl;
+
+	ret = pipe2 (pipe, O_CLOEXEC);
+	if (ret == -1)
+		throw std::system_error (errno, std::system_category (), "pipe");
+
+	switch (fork ()) {
+	case -1:
+		close (pipe[0]);
+		close (pipe[1]);
+		throw std::system_error (errno, std::system_category (), "fork");
+
+	case 0:
+		close (pipe[0]);
+		setsid ();
+		switch (fork ()) {
+		case -1:
+			code = errno;
+			write (pipe[1], &code, sizeof (int));
+			exit (EXIT_FAILURE);
+
+		case 0: {
+			char **argv = new char * [args.size () + 1];
+			for (unsigned int i = 0; i < args.size (); ++i) {
+				argv[i] = new char [args[i].size () + 1];
+				args[i].copy (argv[i], std::string::npos);
+				argv[i][args[i].size ()] = '\0';
+			}
+			argv[args.size ()] = nullptr;
+			execvp (filename.c_str (), argv);
+			code = errno;
+			write (pipe[1], &code, sizeof (int));
+			exit (EXIT_FAILURE);
+		}
+
+		default:
+			exit (EXIT_SUCCESS);
+		}
+
+	default:
+		close (pipe[1]);
+		ret = read (pipe[0], &code, sizeof (int));
+		wait (&status);
+		if (ret == -1) {
+			throw std::system_error (errno, std::system_category (), "read");
+		}
+		else if (ret > 0) {
+			throw std::system_error (code, std::system_category (), "spawned process");
+		}
+		close (pipe[0]);
+		break;
+	}
 }
 
 static std::string toString (JSContext *cx, JS::HandleValue value)
@@ -159,6 +228,7 @@ const JSClass System::js_class = JS_HELPERS_CLASS("System", System);
 
 const JSFunctionSpec System::js_fs[] = {
 	JS_HELPERS_METHOD("setTimeout", System::setTimeout),
+	JS_HELPERS_METHOD("exec", System::exec),
 	{
 		"print",
 		&JsHelpers::LLMethodWrapper<System, &System::print>,

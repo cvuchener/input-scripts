@@ -35,10 +35,10 @@ UInput::UInput ():
 	          "Input script device");
 	_uidev.id.bustype = BUS_VIRTUAL;
 
-	_fd = open ("/dev/uinput", O_RDWR);
+	_fd = open ("/dev/uinput", O_RDWR | O_CLOEXEC);
 	if (_fd == -1)
 		throw std::system_error (errno, std::system_category (), "open");
-	ret = pipe (_pipe);
+	ret = pipe2 (_pipe, O_CLOEXEC);
 	if (ret == -1)
 		throw std::system_error (errno, std::system_category (), "pipe");
 }

@@ -51,10 +51,10 @@ static const std::array<uint8_t, 33> raw_report_desc = {
 SteamControllerReceiver::SteamControllerReceiver (const std::string &path)
 {
 	int ret;
-	_fd = open (path.c_str (), O_RDWR);
+	_fd = open (path.c_str (), O_RDWR | O_CLOEXEC);
 	if (_fd == -1)
 		throw std::system_error (errno, std::system_category (), "open");
-	ret = pipe (_pipe);
+	ret = pipe2 (_pipe, O_CLOEXEC);
 	if (ret == -1)
 		throw std::system_error (errno, std::system_category (), "pipe");
 

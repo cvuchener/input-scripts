@@ -26,6 +26,7 @@
 extern "C" {
 #include <libudev.h>
 #include <unistd.h>
+#include <fcntl.h>
 }
 
 #define INPUT_SCRIPTS_UDEV_TAG	"input_scripts"
@@ -35,7 +36,7 @@ Udev::Udev (const std::map<std::string, Driver *> *drivers):
 	_drivers (drivers),
 	_state (Stopped)
 {
-	if (-1 == pipe (_pipe))
+	if (-1 == pipe2 (_pipe, O_CLOEXEC))
 		throw std::runtime_error ("pipe error");
 }
 
