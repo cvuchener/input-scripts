@@ -8,6 +8,7 @@ set(INPUT_SCRIPTS_SOURCES
 	Script.cpp
 	System.cpp
 	classes/UInput.cpp
+	classes/DBusProxy.cpp
 	Driver.cpp
 	InputDevice.cpp
 	event/EventDriver.cpp
@@ -16,6 +17,7 @@ set(INPUT_SCRIPTS_SOURCES
 	steamcontroller/SteamControllerReceiver.cpp
 	steamcontroller/SteamControllerDevice.cpp
 	Config.cpp
+	DBusConnections.cpp
 	main.cpp
 )
 

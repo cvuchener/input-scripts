@@ -54,6 +54,11 @@ setJSValue (JSContext *cx, JS::MutableHandleValue var, T value)
 	var.setInt32 (value);
 }
 
+inline void setJSValue (JSContext *cx, JS::MutableHandleValue var, double value)
+{
+	var.setNumber (value);
+}
+
 template <typename T>
 inline void setJSValue (JSContext *cx, JS::MutableHandleValue var, std::map<std::string, T> properties)
 {
@@ -90,6 +95,14 @@ readJSValue (JSContext *cx, T &var, JS::HandleValue value)
 		throw std::invalid_argument ("is out of range");
 	}
 	var = static_cast<T> (v);
+}
+
+inline void readJSValue (JSContext *cx, double &var, JS::HandleValue value)
+{
+	if (!value.isNumber ()) {
+		throw std::invalid_argument ("must be a number");
+	}
+	var = value.toNumber ();
 }
 
 inline void readJSValue (JSContext *cx, bool &var, JS::HandleValue value)

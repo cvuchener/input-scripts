@@ -27,6 +27,7 @@
 #include "Udev.h"
 #include "Log.h"
 #include "Config.h"
+#include "DBusConnections.h"
 
 extern "C" {
 #include <unistd.h>
@@ -47,29 +48,6 @@ Options:
 )***";
 
 static constexpr char ServiceName[] = "com.github.cvuchener.InputScripts";
-
-enum Bus {
-	Auto,
-	Session,
-	System
-};
-static DBus::Connection getConnection (Bus bus)
-{
-	switch (bus) {
-	case Auto:
-		if (getuid () == 0)
-			return DBus::Connection::SystemBus ();
-		else
-			return DBus::Connection::SessionBus ();
-
-	case Session:
-		return DBus::Connection::SessionBus ();
-
-	case System:
-	default:
-		return DBus::Connection::SystemBus ();
-	}
-}
 
 static std::map<std::string, Driver *> drivers;
 static ScriptManager *manager;
@@ -97,7 +75,7 @@ int main (int argc, char *argv[])
 		{ "help", no_argument, nullptr, HelpOpt },
 		{ nullptr, 0, nullptr, 0 }
 	};
-	Bus bus = Auto;
+	DBusConnections::Bus bus = DBusConnections::Auto;
 	std::string config_file ("config.json");
 	Log::Level log_level = Log::Warning;
 
@@ -105,11 +83,11 @@ int main (int argc, char *argv[])
 	while (-1 != (opt = getopt_long (argc, argv, "c:v::h", longopts, nullptr))) {
 		switch (opt) {
 		case SessionOpt:
-			bus = Session;
+			bus = DBusConnections::SessionBus;
 			break;
 
 		case SystemOpt:
-			bus = System;
+			bus = DBusConnections::SystemBus;
 			break;
 
 		case 'c':
@@ -152,8 +130,10 @@ int main (int argc, char *argv[])
 		return -1;
 	}
 
+
+	DBus::_init_threading();
 	DBus::default_dispatcher = &dispatcher;
-	DBus::Connection dbus_connection = getConnection (bus);
+	DBus::Connection &dbus_connection = DBusConnections::getBus (bus);
 	dbus_connection.request_name (ServiceName);
 
 	drivers.emplace ("event", new EventDriver ());
