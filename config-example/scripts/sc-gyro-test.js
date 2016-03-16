@@ -1,4 +1,5 @@
 const GyroMouse = importScript ("imports/gyro-mouse.js");
+const SC = SteamControllerDevice;
 
 function init () {
 	this.mouse = new UInput ();
@@ -13,8 +14,8 @@ function init () {
 	this.gyro_mouse.init (this.mouseMove.bind (this), 0.05);
 
 	input.disableKeys ();
-	input.setSetting (input.SettingTrackBall, input.TrackBallOff);
-	input.setSetting (input.SettingOrientationSensors, input.SensorGyroQ);
+	input.setSetting (SC.SettingTrackBall, SC.TrackBallOff);
+	input.setSetting (SC.SettingOrientationSensors, SC.SensorGyroQ);
 }
 
 function mouseMove (axis, d) {
@@ -27,23 +28,23 @@ function mouseMove (axis, d) {
 		this.mouse.sendRel (REL_Y, d);
 		break;
 	}
-	input.hapticFeedback (input.HapticRight, 0x40, 10000, Math.abs (d));
+	input.hapticFeedback (SC.HapticRight, 0x40, 10000, Math.abs (d));
 }
 
 function finalize () {
 	this.mouse.destroy ();
-	input.setSetting (input.SettingOrientationSensors, 0);
+	input.setSetting (SC.SettingOrientationSensors, 0);
 }
 
 function event (type, code, value) {
 	switch (type) {
 	case EV_KEY:
 		switch (code) {
-		case input.BtnTriggerLeft:
+		case SC.BtnTriggerLeft:
 			this.mouse.sendKey (BTN_RIGHT, value);
 			this.moved = true;
 			break;
-		case input.BtnTriggerRight:
+		case SC.BtnTriggerRight:
 			this.mouse.sendKey (BTN_LEFT, value);
 			this.moved = true;
 			break;
@@ -51,10 +52,10 @@ function event (type, code, value) {
 		break;
 
 	case EV_SYN:
-		this.gyro_mouse.update (input.getValue (EV_ABS, input.AbsGyroQW),
-					input.getValue (EV_ABS, input.AbsGyroQX),
-					input.getValue (EV_ABS, input.AbsGyroQY),
-					input.getValue (EV_ABS, input.AbsGyroQZ));
+		this.gyro_mouse.update (input.getValue (EV_ABS, SC.AbsGyroQW),
+					input.getValue (EV_ABS, SC.AbsGyroQX),
+					input.getValue (EV_ABS, SC.AbsGyroQY),
+					input.getValue (EV_ABS, SC.AbsGyroQZ));
 		if (this.moved) {
 			this.mouse.sendSyn (code);
 			this.moved = false;

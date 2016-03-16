@@ -1,7 +1,5 @@
 const Q = importScript ("imports/quaternion.js");
-const Geometry = importScript ("imports/geometry.js");
-const angle = Geometry.angle;
-const length = Geometry.length;
+const G = importScript ("imports/geometry.js");
 
 function init (callback, stepsize) {
 	this.callback = callback;
@@ -17,8 +15,8 @@ function update (w, x, y, z) {
 	if (this.last_dir_set) {
 		var dir = Q.transform (q, this.last_dir);
 
-		var diff = [ 180/Math.PI * Geometry.shortestAngleDiff (angle ([dir[1], dir[0]]), 0),
-			     180/Math.PI * Geometry.shortestAngleDiff (angle ([dir[1], -dir[2]]), 0)];
+		var diff = [ 180/Math.PI * G.shortestAngleDiff (G.angle ([dir[1], dir[0]]), 0),
+			     180/Math.PI * G.shortestAngleDiff (G.angle ([dir[1], -dir[2]]), 0)];
 		for (var i = 0; i < 2; ++i) {
 			this.r[i] += diff[i];
 			var steps = Math.floor (Math.abs (this.r[i]) / this.stepsize) * Math.sign (this.r[i]);

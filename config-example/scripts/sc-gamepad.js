@@ -1,9 +1,10 @@
-SteamControllerFF = importScript ("imports/sc-ff.js");
-Remapper = importScript ("imports/remapper.js");
+const SteamControllerFF = importScript ("imports/sc-ff.js");
+const Remapper = importScript ("imports/remapper.js");
+const SC = SteamControllerDevice;
 
 function init () {
 	input.disableKeys ();
-	input.setSetting (input.SettingTrackBall, input.TrackBallOff);
+	input.setSetting (SC.SettingTrackBall, SC.TrackBallOff);
 
 	this.uinput = new UInput ();
 	this.uinput.name = "Valve Steam Controller Gamepad";
@@ -44,42 +45,42 @@ function init () {
 
 	this.remapper = Object.create (Remapper);
 	this.remapper.init (input, this.uinput, [
-		{ type: EV_KEY, code: input.BtnA, new_code: BTN_SOUTH },
-		{ type: EV_KEY, code: input.BtnB, new_code: BTN_EAST },
-		{ type: EV_KEY, code: input.BtnX, new_code: BTN_WEST },
-		{ type: EV_KEY, code: input.BtnY, new_code: BTN_NORTH },
-		{ type: EV_KEY, code: input.BtnShoulderLeft, new_code: BTN_TL },
-		{ type: EV_KEY, code: input.BtnShoulderRight, new_code: BTN_TR },
-		{ type: EV_KEY, code: input.BtnTriggerLeft, new_code: BTN_TL2 },
-		{ type: EV_KEY, code: input.BtnTriggerRight, new_code: BTN_TR2 },
-		{ type: EV_KEY, code: input.BtnGripLeft, new_code: BTN_C },
-		{ type: EV_KEY, code: input.BtnGripRight, new_code: BTN_Z },
-		{ type: EV_KEY, code: input.BtnSelect, new_code: BTN_SELECT },
-		{ type: EV_KEY, code: input.BtnMode, new_code: BTN_MODE },
-		{ type: EV_KEY, code: input.BtnStart, new_code: BTN_START },
-		{ type: EV_KEY, code: input.BtnClickLeft,
-			modifiers: [{ type: EV_KEY, code: input.BtnTouchLeft, max: 0 }],
+		{ type: EV_KEY, code: SC.BtnA, new_code: BTN_SOUTH },
+		{ type: EV_KEY, code: SC.BtnB, new_code: BTN_EAST },
+		{ type: EV_KEY, code: SC.BtnX, new_code: BTN_WEST },
+		{ type: EV_KEY, code: SC.BtnY, new_code: BTN_NORTH },
+		{ type: EV_KEY, code: SC.BtnShoulderLeft, new_code: BTN_TL },
+		{ type: EV_KEY, code: SC.BtnShoulderRight, new_code: BTN_TR },
+		{ type: EV_KEY, code: SC.BtnTriggerLeft, new_code: BTN_TL2 },
+		{ type: EV_KEY, code: SC.BtnTriggerRight, new_code: BTN_TR2 },
+		{ type: EV_KEY, code: SC.BtnGripLeft, new_code: BTN_C },
+		{ type: EV_KEY, code: SC.BtnGripRight, new_code: BTN_Z },
+		{ type: EV_KEY, code: SC.BtnSelect, new_code: BTN_SELECT },
+		{ type: EV_KEY, code: SC.BtnMode, new_code: BTN_MODE },
+		{ type: EV_KEY, code: SC.BtnStart, new_code: BTN_START },
+		{ type: EV_KEY, code: SC.BtnClickLeft,
+			modifiers: [{ type: EV_KEY, code: SC.BtnTouchLeft, max: 0 }],
 			new_code: 0x13f },
-		{ type: EV_KEY, code: input.BtnClickLeft,
-			modifiers: [{ type: EV_KEY, code: input.BtnTouchLeft, min: 1 }],
+		{ type: EV_KEY, code: SC.BtnClickLeft,
+			modifiers: [{ type: EV_KEY, code: SC.BtnTouchLeft, min: 1 }],
 			new_code: BTN_THUMBL },
-		{ type: EV_KEY, code: input.BtnClickRight, new_code: BTN_THUMBR },
-		{ type: EV_ABS, code: input.AbsLeftX,
-			modifiers: [{ type: EV_KEY, code: input.BtnTouchLeft, max: 0 }],
+		{ type: EV_KEY, code: SC.BtnClickRight, new_code: BTN_THUMBR },
+		{ type: EV_ABS, code: SC.AbsLeftX,
+			modifiers: [{ type: EV_KEY, code: SC.BtnTouchLeft, max: 0 }],
 			new_code: ABS_X },
-		{ type: EV_ABS, code: input.AbsLeftY,
-			modifiers: [{ type: EV_KEY, code: input.BtnTouchLeft, max: 0 }],
+		{ type: EV_ABS, code: SC.AbsLeftY,
+			modifiers: [{ type: EV_KEY, code: SC.BtnTouchLeft, max: 0 }],
 			new_code: ABS_Y },
-		{ type: EV_ABS, code: input.AbsLeftX,
-			modifiers: [{ type: EV_KEY, code: input.BtnTouchLeft, min: 1 }],
+		{ type: EV_ABS, code: SC.AbsLeftX,
+			modifiers: [{ type: EV_KEY, code: SC.BtnTouchLeft, min: 1 }],
 			new_code: ABS_HAT0X },
-		{ type: EV_ABS, code: input.AbsLeftY,
-			modifiers: [{ type: EV_KEY, code: input.BtnTouchLeft, min: 1 }],
+		{ type: EV_ABS, code: SC.AbsLeftY,
+			modifiers: [{ type: EV_KEY, code: SC.BtnTouchLeft, min: 1 }],
 			new_code: ABS_HAT0Y },
-		{ type: EV_ABS, code: input.AbsRightX, new_code: ABS_HAT1X },
-		{ type: EV_ABS, code: input.AbsRightY, new_code: ABS_HAT1Y },
-		{ type: EV_ABS, code: input.AbsLeftTrigger, new_code: ABS_GAS },
-		{ type: EV_ABS, code: input.AbsRightTrigger, new_code: ABS_BRAKE },
+		{ type: EV_ABS, code: SC.AbsRightX, new_code: ABS_HAT1X },
+		{ type: EV_ABS, code: SC.AbsRightY, new_code: ABS_HAT1Y },
+		{ type: EV_ABS, code: SC.AbsLeftTrigger, new_code: ABS_GAS },
+		{ type: EV_ABS, code: SC.AbsRightTrigger, new_code: ABS_BRAKE },
 	]);
 
 }

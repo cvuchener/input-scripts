@@ -1,3 +1,5 @@
+const SC = SteamControllerDevice;
+
 function init (uinput) {
 	uinput.setFF (FF_PERIODIC);
 	uinput.setFF (FF_SINE);
@@ -35,8 +37,8 @@ function startEffect (id) {
 	
 	case FF_RUMBLE:
 		system.setTimeout (function () {
-			input.hapticFeedback (input.HapticLeft, effect.strong_magnitude * this.gain, 10000, effect.replay_length/100);
-			input.hapticFeedback (input.HapticRight, effect.weak_magnitude * this.gain, 10000, effect.replay_length/100);
+			input.hapticFeedback (SC.HapticLeft, effect.strong_magnitude * this.gain, 10000, effect.replay_length/100);
+			input.hapticFeedback (SC.HapticRight, effect.weak_magnitude * this.gain, 10000, effect.replay_length/100);
 		}.bind (this), effect.replay_delay);
 		break;
 	}
@@ -56,8 +58,8 @@ function playPeriodicEffect (id, time) {
 		var c = (effect.replay_length - time) /effect.fade_length;
 		magnitude = effect.magnitude * c + effect.fade_level * (1-c);
 	}
-	input.hapticFeedback (input.HapticLeft, magnitude * this.gain, 0, 1);
-	input.hapticFeedback (input.HapticRight, magnitude * this.gain, 0, 1);
+	input.hapticFeedback (SC.HapticLeft, magnitude * this.gain, 0, 1);
+	input.hapticFeedback (SC.HapticRight, magnitude * this.gain, 0, 1);
 	system.setTimeout (this.playPeriodicEffect.bind (this, id, time+effect.period), effect.period);
 	
 }

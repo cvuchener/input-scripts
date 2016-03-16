@@ -93,13 +93,14 @@ public:
 			static_member_pointer_or_null_js_fs<T> (),
 			static_member_pointer_or_null_js_static_ps<T> (),
 			static_member_pointer_or_null_js_static_fs<T> ());
+		JS::RootedObject js_constructor (cx, JS_GetConstructor (cx, _proto));
 		const std::pair<std::string, int > *int_const = static_member_pointer_or_null_js_int_const<T> ();
 		if (int_const) {
 			unsigned int i = 0;
 			while (!int_const[i].first.empty ()) {
 				JS::RootedValue value (cx);
 				setJSValue (cx, &value, int_const[i].second);
-				JS_DefineProperty (cx, _proto,
+				JS_DefineProperty (cx, js_constructor,
 					int_const[i].first.c_str (), value,
 					JSPROP_ENUMERATE | JSPROP_READONLY | JSPROP_PERMANENT);
 				++i;

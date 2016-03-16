@@ -1,6 +1,8 @@
+const SC = SteamControllerDevice;
+
 function init () {
 	input.enableKeys ();
-	input.setSetting (input.SettingTrackBall, input.TrackBallOn);
+	input.setSetting (SC.SettingTrackBall, SC.TrackBallOn);
 }
 
 function finalize () {
