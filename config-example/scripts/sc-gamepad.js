@@ -59,23 +59,23 @@ function init () {
 		{ type: EV_KEY, code: SC.BtnMode, new_code: BTN_MODE },
 		{ type: EV_KEY, code: SC.BtnStart, new_code: BTN_START },
 		{ type: EV_KEY, code: SC.BtnClickLeft,
-			modifiers: [{ type: EV_KEY, code: SC.BtnTouchLeft, max: 0 }],
+			modifiers: [{ type: SC.EventBtn, code: SC.BtnTouchLeft, max: 0 }],
 			new_code: 0x13f },
 		{ type: EV_KEY, code: SC.BtnClickLeft,
-			modifiers: [{ type: EV_KEY, code: SC.BtnTouchLeft, min: 1 }],
+			modifiers: [{ type: SC.EventBtn, code: SC.BtnTouchLeft, min: 1 }],
 			new_code: BTN_THUMBL },
 		{ type: EV_KEY, code: SC.BtnClickRight, new_code: BTN_THUMBR },
 		{ type: EV_ABS, code: SC.AbsLeftX,
-			modifiers: [{ type: EV_KEY, code: SC.BtnTouchLeft, max: 0 }],
+			modifiers: [{ type: SC.EventBtn, code: SC.BtnTouchLeft, max: 0 }],
 			new_code: ABS_X },
 		{ type: EV_ABS, code: SC.AbsLeftY,
-			modifiers: [{ type: EV_KEY, code: SC.BtnTouchLeft, max: 0 }],
+			modifiers: [{ type: SC.EventBtn, code: SC.BtnTouchLeft, max: 0 }],
 			new_code: ABS_Y },
 		{ type: EV_ABS, code: SC.AbsLeftX,
-			modifiers: [{ type: EV_KEY, code: SC.BtnTouchLeft, min: 1 }],
+			modifiers: [{ type: SC.EventBtn, code: SC.BtnTouchLeft, min: 1 }],
 			new_code: ABS_HAT0X },
 		{ type: EV_ABS, code: SC.AbsLeftY,
-			modifiers: [{ type: EV_KEY, code: SC.BtnTouchLeft, min: 1 }],
+			modifiers: [{ type: SC.EventBtn, code: SC.BtnTouchLeft, min: 1 }],
 			new_code: ABS_HAT0Y },
 		{ type: EV_ABS, code: SC.AbsRightX, new_code: ABS_HAT1X },
 		{ type: EV_ABS, code: SC.AbsRightY, new_code: ABS_HAT1Y },
@@ -89,14 +89,14 @@ function finalize () {
 	this.uinput.destroy ();
 }
 
-function event (type, code, value) {
-	switch (type) {
-	case EV_KEY:
-	case EV_ABS:
-		this.remapper.event (type, code, value);
+function event (ev) {
+	switch (ev.type) {
+	case SC.EventBtn:
+	case SC.EventAbs:
+		this.remapper.event (ev.type, ev.code, ev.value);
 		break;
 	
 	case EV_SYN:
-		this.uinput.sendSyn (code);
+		this.uinput.sendSyn (ev.code);
 	}
 }

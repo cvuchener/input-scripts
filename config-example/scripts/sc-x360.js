@@ -56,14 +56,14 @@ function init () {
 		{ type: EV_KEY, code: SC.BtnMode, new_code: BTN_MODE },
 		{ type: EV_KEY, code: SC.BtnStart, new_code: BTN_START },
 		{ type: EV_KEY, code: SC.BtnClickLeft,
-			modifiers: [{ type: EV_KEY, code: SC.BtnTouchLeft, max: 0 }],
+			modifiers: [{ type: SC.EventBtn, code: SC.BtnTouchLeft, max: 0 }],
 			new_code: BTN_THUMBL },
 		{ type: EV_KEY, code: SC.BtnClickRight, new_code: BTN_THUMBR },
 		{ type: EV_ABS, code: SC.AbsLeftX,
-			modifiers: [{ type: EV_KEY, code: SC.BtnTouchLeft, max: 0 }],
+			modifiers: [{ type: SC.EventBtn, code: SC.BtnTouchLeft, max: 0 }],
 			new_code: ABS_X },
 		{ type: EV_ABS, code: SC.AbsLeftY,
-			modifiers: [{ type: EV_KEY, code: SC.BtnTouchLeft, max: 0 }],
+			modifiers: [{ type: SC.EventBtn, code: SC.BtnTouchLeft, max: 0 }],
 			new_code: ABS_Y, transform: this.inverse },
 		{ type: EV_ABS, code: SC.AbsRightX, new_code: ABS_RX },
 		{ type: EV_ABS, code: SC.AbsRightY, new_code: ABS_RY },
@@ -95,23 +95,23 @@ function touchButton (actuator, type, code, value, pressed) {
 		this.uinput.sendEvent (type, code, 0);
 }
 
-function event (type, code, value) {
-	if (type == EV_KEY && code == SC.BtnClickLeft && value == 0 &&
-	    input.getValue (EV_KEY, SC.BtnTouchLeft) == 1) {
+function event (ev) {
+	if (ev.type == SC.EventBtn && ev.code == SC.BtnClickLeft && ev.value == 0 &&
+	    input.getEvent ({ type: SC.EventBtn, code: SC.BtnTouchLeft }).value == 1) {
 		this.dpad.release ();
 	}
-	switch (type) {
-	case EV_KEY:
+	switch (ev.type) {
+	case SC.EventBtn:
 	case EV_ABS:
-		this.remapper.event (type, code, value);
+		this.remapper.event (ev.type, ev.code, ev.value);
 		break;
 	
 	case EV_SYN:
-		if (input.getValue (EV_KEY, SC.BtnTouchLeft) == 1 &&
-		    input.getValue (EV_KEY, SC.BtnClickLeft) == 1) {
-			this.dpad.updatePos (input.getValue (EV_ABS, SC.AbsLeftX),
-					input.getValue (EV_ABS, SC.AbsLeftY));
+		if (input.getEvent ({ type: SC.EventBtn, code: SC.BtnTouchLeft }).value == 1 &&
+		    input.getEvent ({ type: SC.EventBtn, code: SC.BtnClickLeft }).value == 1) {
+			this.dpad.updatePos (input.getEvent ({ type: EV_ABS, code: SC.AbsLeftX }).value,
+					input.getEvent ({ type: EV_ABS, code: SC.AbsLeftY }).value);
 		}
-		this.uinput.sendSyn (code);
+		this.uinput.sendSyn (ev.code);
 	}
 }

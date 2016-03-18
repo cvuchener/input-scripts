@@ -25,6 +25,6 @@ InputDevice::~InputDevice ()
 const JSClass InputDevice::js_class = JS_HELPERS_CLASS("InputDevice", InputDevice);
 
 const JSFunctionSpec InputDevice::js_fs[] = {
-	JS_HELPERS_METHOD("getValue", InputDevice::getValue),
+	JS_HELPERS_METHOD("getEvent", InputDevice::getEvent),
 	JS_FS_END
 };

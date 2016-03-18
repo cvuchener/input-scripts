@@ -25,7 +25,6 @@
 extern "C" {
 #include <unistd.h>
 #include <fcntl.h>
-#include <linux/input.h>
 }
 
 SteamControllerDevice::SteamControllerDevice (SteamControllerReceiver *receiver):
@@ -92,109 +91,186 @@ void SteamControllerDevice::readEvents ()
 			readLE<int16_t> (&report[30]),
 			readLE<int16_t> (&report[32])
 		};
-		int16_t gyro_r[3] = {
+		int16_t gyro[3] = {
 			readLE<int16_t> (&report[34]),
 			readLE<int16_t> (&report[36]),
 			readLE<int16_t> (&report[38])
 		};
-		int16_t gyro_q[4] = {
+		int16_t quaternion[4] = {
 			readLE<int16_t> (&report[40]),
 			readLE<int16_t> (&report[42]),
 			readLE<int16_t> (&report[44]),
 			readLE<int16_t> (&report[46])
 		};
 
-		uint32_t buttons_diff = buttons ^ _state.buttons;
-		_state.buttons = buttons;
 		bool changed = false;
+		// Absolute axes
 		for (unsigned int i = 0; i < 2; ++i) {
 			if (std::abs (_state.left[i]-left[i]) > AxisFuzz) {
 				_state.left[i] = left[i];
-				eventRead (EV_ABS, AbsLeftX+i, left[i]);
+				eventRead ({
+					{ "type", EventAbs },
+					{ "code", AbsLeftX+i },
+					{ "value", left[i] }
+				});
 				changed = true;
 			}
 			if (std::abs (_state.right[i]-right[i]) > AxisFuzz) {
 				_state.right[i] = right[i];
-				eventRead (EV_ABS, AbsRightX+i, right[i]);
+				eventRead ({
+					{ "type", EventAbs },
+					{ "code", AbsRightX+i },
+					{ "value", right[i] }
+				});
 				changed = true;
 			}
 			if (std::abs (_state.triggers[i]-triggers[i]) > TriggerFuzz) {
 				_state.triggers[i] = triggers[i];
-				eventRead (EV_ABS, AbsLeftTrigger+i, triggers[i]);
+				eventRead ({
+					{ "type", EventAbs },
+					{ "code", AbsLeftTrigger+i },
+					{ "value", triggers[i] }
+				});
 				changed = true;
 			}
 		}
+		// Sensor events
+		bool accel_changed = false, gyro_changed = false;
 		for (unsigned int i = 0; i < 3; ++i) {
-			if (std::abs (_state.accel[i]-accel[i]) > AccelFuzz) {
+			if (std::abs (_state.accel[i]-accel[i]) > SensorFuzz) {
 				_state.accel[i] = accel[i];
-				eventRead (EV_ABS, AbsAccelX+i, accel[i]);
-				changed = true;
+				accel_changed = true;
 			}
-			if (gyro_r[i] != 0) {
-				eventRead (EV_REL, RelGyroRX+i, gyro_r[i]);
-				changed = true;
+			if (std::abs (_state.gyro[i]-gyro[i]) > SensorFuzz) {
+				_state.gyro[i] = gyro[i];
+				gyro_changed = true;
 			}
 		}
+		if (accel_changed) {
+			eventRead ({
+				{ "type", EventSensor },
+				{ "code", SensorAccel },
+				{ "x", accel[0] },
+				{ "y", accel[1] },
+				{ "z", accel[2] }
+			});
+			changed = true;
+		}
+		if (gyro_changed) {
+			eventRead ({
+				{ "type", EventSensor },
+				{ "code", SensorGyro },
+				{ "x", gyro[0] },
+				{ "y", gyro[1] },
+				{ "z", gyro[2] }
+			});
+			changed = true;
+		}
+		// Orientation quaternion
+		bool q_changed = false;
 		for (unsigned int i = 0; i < 4; ++i) {
-			if (std::abs (_state.gyro_q[i]-gyro_q[i]) > GyroFuzz) {
-				_state.gyro_q[i] = gyro_q[i];
-				eventRead (EV_ABS, AbsGyroQW+i, gyro_q[i]);
-				changed = true;
+			if (std::abs (_state.quaternion[i]-quaternion[i]) > SensorFuzz) {
+				_state.quaternion[i] = quaternion[i];
+				q_changed = true;
 			}
 		}
+		if (q_changed) {
+			eventRead ({
+				{ "type", EventOrientation },
+				{ "w", quaternion[0] },
+				{ "x", quaternion[1] },
+				{ "y", quaternion[2] },
+				{ "z", quaternion[3] }
+			});
+			changed = true;
+		}
+		// Buttons
+		uint32_t buttons_diff = buttons ^ _state.buttons;
+		_state.buttons = buttons;
 		for (unsigned int i = 0; i < 32; ++i) {
 			if (buttons_diff & (1<<i)) {
-				eventRead (EV_KEY, i, (buttons & (1<<i) ? 1 : 0));
+				eventRead ({
+					{ "type", EventBtn },
+					{ "code", i },
+					{ "value", (buttons & (1<<i) ? 1 : 0) }
+				});
 				changed = true;
 			}
 		}
-		if (changed)
-			eventRead (EV_SYN, SYN_REPORT, 0);
+		// Send SYN event only when something else was sent
+		if (changed) {
+			eventRead ({
+				{ "type", EV_SYN },
+				{ "code", SYN_REPORT },
+				{ "value", 0 }
+			});
+		}
 	}
 }
 
-int32_t SteamControllerDevice::getValue (uint16_t type, uint16_t code)
+InputDevice::Event SteamControllerDevice::getEvent (InputDevice::Event event)
 {
+	int type = event["type"];
+	int code;
 	switch (type) {
-	case EV_KEY:
-		if (code >= 32)
-			throw std::invalid_argument ("button code too high");
-		return (_state.buttons & (1<<code)) >> code;
+	case EventBtn:
+		code = event["code"];
+		if (code < 0 || code >= 32)
+			throw std::invalid_argument ("invalid button code");
+		event["value"] = (_state.buttons & (1<<code)) >> code;
+		return event;
 
-	case EV_ABS:
+	case EventAbs:
+		code = event["code"];
 		switch (code) {
 		case AbsLeftX:
-			return _state.left[0];
+			event["value"] =  _state.left[0];
+			return event;
 		case AbsLeftY:
-			return _state.left[1];
+			event["value"] =  _state.left[1];
+			return event;
 		case AbsRightX:
-			return _state.right[0];
+			event["value"] =  _state.right[0];
+			return event;
 		case AbsRightY:
-			return _state.right[1];
+			event["value"] =  _state.right[1];
+			return event;
 		case AbsLeftTrigger:
-			return _state.triggers[0];
+			event["value"] =  _state.triggers[0];
+			return event;
 		case AbsRightTrigger:
-			return _state.triggers[1];
-		case AbsAccelX:
-			return _state.accel[0];
-		case AbsAccelY:
-			return _state.accel[1];
-		case AbsAccelZ:
-			return _state.accel[2];
-		case AbsGyroQW:
-			return _state.gyro_q[0];
-		case AbsGyroQX:
-			return _state.gyro_q[1];
-		case AbsGyroQY:
-			return _state.gyro_q[2];
-		case AbsGyroQZ:
-			return _state.gyro_q[3];
+			event["value"] =  _state.triggers[1];
+			return event;
 		default:
 			throw std::invalid_argument ("invalid abs axis code");
 		}
 
+	case EventSensor:
+		code = event["code"];
+		switch (code) {
+		case SensorAccel:
+			event["x"] = _state.accel[0];
+			event["y"] = _state.accel[1];
+			event["z"] = _state.accel[2];
+			return event;
+		case SensorGyro:
+			event["x"] = _state.gyro[0];
+			event["y"] = _state.gyro[1];
+			event["z"] = _state.gyro[2];
+			return event;
+		default:
+			throw std::invalid_argument ("invalid sensor code");
+		}
+
+	case EventOrientation:
+		event["w"] = _state.quaternion[0];
+		event["x"] = _state.quaternion[1];
+		event["y"] = _state.quaternion[2];
+		event["z"] = _state.quaternion[3];
+		return event;
+
 	default:
-		throw std::invalid_argument ("event type not supported");
+		throw std::invalid_argument ("invalid event type");
 	}
 }
 
@@ -312,11 +388,16 @@ const std::pair<std::string, int> SteamControllerDevice::js_int_const[] = {
 	DEFINE_CONSTANT (TrackBallOn),
 	DEFINE_CONSTANT (TrackBallOff),
 	// enum OrientationSensor
-	DEFINE_CONSTANT (SensorTiltX),
-	DEFINE_CONSTANT (SensorTiltY),
-	DEFINE_CONSTANT (SensorAccel),
-	DEFINE_CONSTANT (SensorGyroQ),
-	DEFINE_CONSTANT (SensorGyroR),
+	DEFINE_CONSTANT (OrientationTiltX),
+	DEFINE_CONSTANT (OrientationTiltY),
+	DEFINE_CONSTANT (OrientationAccel),
+	DEFINE_CONSTANT (OrientationQuaternion),
+	DEFINE_CONSTANT (OrientationGyro),
+	// enum EventType
+	DEFINE_CONSTANT (EventBtn),
+	DEFINE_CONSTANT (EventAbs),
+	DEFINE_CONSTANT (EventSensor),
+	DEFINE_CONSTANT (EventOrientation),
 	// enum Button
 	DEFINE_CONSTANT (BtnTriggerRight),
 	DEFINE_CONSTANT (BtnTriggerLeft),
@@ -342,17 +423,9 @@ const std::pair<std::string, int> SteamControllerDevice::js_int_const[] = {
 	DEFINE_CONSTANT (AbsRightY),
 	DEFINE_CONSTANT (AbsLeftTrigger),
 	DEFINE_CONSTANT (AbsRightTrigger),
-	DEFINE_CONSTANT (AbsAccelX),
-	DEFINE_CONSTANT (AbsAccelY),
-	DEFINE_CONSTANT (AbsAccelZ),
-	DEFINE_CONSTANT (AbsGyroQW),
-	DEFINE_CONSTANT (AbsGyroQX),
-	DEFINE_CONSTANT (AbsGyroQY),
-	DEFINE_CONSTANT (AbsGyroQZ),
-	// enum RelAxis
-	DEFINE_CONSTANT (RelGyroRX),
-	DEFINE_CONSTANT (RelGyroRY),
-	DEFINE_CONSTANT (RelGyroRZ),
+	// enum Sensor
+	DEFINE_CONSTANT (SensorAccel),
+	DEFINE_CONSTANT (SensorGyro),
 	{ "", 0 }
 };
 

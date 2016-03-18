@@ -87,12 +87,10 @@ static const JSClass global_class = {
 
 void Script::readInputEvents (JSContext *cx, JS::HandleObject script_object)
 {
-	_device->eventRead = [this, cx, script_object] (uint16_t type, uint16_t code, int32_t value) {
-		execOnJsThreadAsync ([cx, script_object, type, code, value] () {
-			JS::AutoValueArray<3> args (cx);
-			args[0].setNumber (static_cast<uint32_t> (type));
-			args[1].setNumber (static_cast<uint32_t> (code));
-			args[2].setNumber (static_cast<double> (value));
+	_device->eventRead = [this, cx, script_object] (InputDevice::Event event) {
+		execOnJsThreadAsync ([cx, script_object, event] () {
+			JS::AutoValueArray<1> args (cx);
+			JsHelpers::setJSValue (cx, args[0], event);
 			JS::RootedValue rval (cx);
 			JS_CallFunctionName (cx, script_object, "event", args, &rval);
 		});

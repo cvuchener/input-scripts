@@ -50,7 +50,7 @@ function init () {
 		{ type: EV_KEY, code: SC.BtnMode, new_code: KEY_LEFTMETA },
 		{ type: EV_KEY, code: SC.BtnStart, new_code: KEY_ESC },
 		{ type: EV_KEY, code: SC.BtnClickLeft,
-			modifiers: [{ type: EV_KEY, code: SC.BtnTouchLeft, min: 1 }],
+			modifiers: [{ type: SC.EventBtn, code: SC.BtnTouchLeft, min: 1 }],
 			new_code: BTN_MIDDLE },
 		{ type: EV_KEY, code: SC.BtnClickRight, new_code: KEY_LEFTSHIFT },
 	]);
@@ -87,29 +87,29 @@ function scrollWheelEvent (steps) {
 	this.uinput.sendEvent (EV_REL, REL_WHEEL, steps);
 }
 
-function event (type, code, value) {
-	switch (type) {
-	case EV_KEY:
-		if (code == SC.BtnTouchLeft) {
-			if (value == 0)
+function event (ev) {
+	switch (ev.type) {
+	case SC.EventBtn:
+		if (ev.code == SC.BtnTouchLeft) {
+			if (ev.value == 0)
 				this.scroll_wheel.release ();
 			else
 				this.dpad.release ();
 		}
-		this.remapper.event (type, code, value);
+		this.remapper.event (ev.type, ev.code, ev.value);
 		break;
 
 	case EV_SYN:
-		if (input.getValue (EV_KEY, SC.BtnTouchLeft) == 0) {
+		if (input.getEvent ({ type: SC.EventBtn, code: SC.BtnTouchLeft }).value == 0) {
 			this.dpad.updatePos (
-				input.getValue (EV_ABS, SC.AbsLeftX),
-				input.getValue (EV_ABS, SC.AbsLeftY));
+				input.getEvent ({ type: SC.EventAbs, code: SC.AbsLeftX }).value,
+				input.getEvent ({ type: SC.EventAbs, code: SC.AbsLeftY }).value);
 		}
 		else {
 			this.scroll_wheel.updatePos (
-				input.getValue (EV_ABS, SC.AbsLeftX),
-				input.getValue (EV_ABS, SC.AbsLeftY));
+				input.getEvent ({ type: SC.EventAbs, code: SC.AbsLeftX }).value,
+				input.getEvent ({ type: SC.EventAbs, code: SC.AbsLeftY }).value);
 		}
-		this.uinput.sendSyn (code);
+		this.uinput.sendSyn (ev.code);
 	}
 }

@@ -16,18 +16,18 @@ function finalize () {
 	this.mouse_region.finalize ();
 }
 
-function event (type, code, value) {
-	switch (type) {
-	case EV_KEY:
-		if (code == SC.BtnTouchRight && value == 0)
+function event (ev) {
+	switch (ev.type) {
+	case SC.EventBtn:
+		if (ev.code == SC.BtnTouchRight && ev.value == 0)
 			this.mouse_region.release ();
 		break;
 
 	case EV_SYN:
-		if (input.getValue (EV_KEY, SC.BtnTouchRight) == 1) {
+		if (input.getEvent ({ type: SC.EventBtn, code: SC.BtnTouchRight }).value == 1) {
 			this.mouse_region.update ([
-				input.getValue (EV_ABS, SC.AbsRightX),
-				-input.getValue (EV_ABS, SC.AbsRightY)
+				input.getEvent ({ type: SC.EventAbs, code: SC.AbsRightX }).value,
+				-input.getEvent ({ type: SC.EventAbs, code: SC.AbsRightY }).value
 			]);
 		}
 		break;

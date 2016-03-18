@@ -27,12 +27,14 @@
 class InputDevice
 {
 public:
+	typedef std::map<std::string, int> Event;
+
 	virtual ~InputDevice ();
 
 	virtual void interrupt () = 0;
 	virtual void readEvents () = 0;
 
-	virtual int32_t getValue (uint16_t type, uint16_t code) = 0;
+	virtual Event getEvent (Event) = 0;
 
 	virtual std::string driver () const = 0;
 	virtual std::string name () const = 0;
@@ -40,7 +42,7 @@ public:
 
 	virtual operator bool () const = 0;
 
-	std::function<void (uint16_t, uint16_t, int32_t)> eventRead;
+	std::function<void (Event)> eventRead;
 
 	static const JSClass js_class;
 	static const JSFunctionSpec js_fs[];

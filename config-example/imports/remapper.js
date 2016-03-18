@@ -37,7 +37,7 @@ function testEvent (event) {
 	if (event.hasOwnProperty ("modifiers")) {
 		for (var i = 0; i < event.modifiers.length; ++i) {
 			var mod = event.modifiers[i];
-			var mod_value = this.input.getValue (mod.type, mod.code);
+			var mod_value = this.input.getEvent ({ type: mod.type, code: mod.code }).value;
 			if (mod.hasOwnProperty ("min") && mod_value < mod.min)
 				return false;
 			if (mod.hasOwnProperty ("max") && mod_value > mod.max)
@@ -70,7 +70,7 @@ function event (type, code, value) {
 		if (this.modifiers[type].hasOwnProperty (code)) {
 			this.modifiers[type][code].forEach (function (ev) {
 				if (!ev.state && this.testEvent (ev)) {
-					this.processEvent (ev, this.input.getValue (ev.type, ev.code));
+					this.processEvent (ev, this.input.getEvent ({ type: ev.type, code: ev.code }).value);
 				}
 				ev.state = this.testEvent (ev);
 			}.bind (this));

@@ -25,6 +25,10 @@
 #include <cstdint>
 #include "../MTQueue.h"
 
+extern "C" {
+#include <linux/input.h>
+}
+
 class SteamControllerReceiver;
 
 class SteamControllerDevice: public InputDevice
@@ -36,7 +40,7 @@ public:
 	virtual void interrupt ();
 	virtual void readEvents ();
 
-	virtual int32_t getValue (uint16_t type, uint16_t code);
+	virtual InputDevice::Event getEvent (InputDevice::Event event);
 
 	virtual std::string driver () const;
 	virtual std::string name () const;
@@ -73,11 +77,18 @@ public:
 	};
 
 	enum OrientationSensor: uint16_t {
-		SensorTiltX = 0x0001,
-		SensorTiltY = 0x0002,
-		SensorAccel = 0x0004,
-		SensorGyroQ = 0x0008,
-		SensorGyroR = 0x0010,
+		OrientationTiltX = 0x0001,
+		OrientationTiltY = 0x0002,
+		OrientationAccel = 0x0004,
+		OrientationQuaternion = 0x0008,
+		OrientationGyro = 0x0010,
+	};
+
+	enum EventType {
+		EventBtn = EV_KEY,
+		EventAbs = EV_ABS,
+		EventSensor = EV_MAX+1,
+		EventOrientation
 	};
 
 	enum Button {
@@ -107,25 +118,16 @@ public:
 		AbsRightY,
 		AbsLeftTrigger,
 		AbsRightTrigger,
-		AbsAccelX,
-		AbsAccelY,
-		AbsAccelZ,
-		AbsGyroQW,
-		AbsGyroQX,
-		AbsGyroQY,
-		AbsGyroQZ,
 	};
 
-	enum RelAxis {
-		RelGyroRX,
-		RelGyroRY,
-		RelGyroRZ,
+	enum Sensor {
+		SensorAccel,
+		SensorGyro,
 	};
 
 	static constexpr int AxisFuzz = 16;
 	static constexpr int TriggerFuzz = 4;
-	static constexpr int AccelFuzz = 16;
-	static constexpr int GyroFuzz = 16;
+	static constexpr int SensorFuzz = 16;
 
 	static const JSClass js_class;
 	static const JSFunctionSpec js_fs[];
@@ -144,7 +146,8 @@ private:
 		int16_t right[2];
 		int8_t triggers[2];
 		int16_t accel[3];
-		int16_t gyro_q[4];
+		int16_t gyro[3];
+		int16_t quaternion[4];
 	} _state;
 	std::string _serial;
 };

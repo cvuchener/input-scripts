@@ -130,6 +130,31 @@ inline void readJSValue (JSContext *cx, std::vector<T> &var, JS::HandleValue val
 	}
 }
 
+template <typename T>
+inline void readJSValue (JSContext *cx, std::map<std::string, T> &var, JS::HandleValue value) {
+	if (!value.isObject ()) {
+		throw std::invalid_argument ("must be an object");
+	}
+	JS::RootedObject obj (cx, value.toObjectOrNull ());
+	JSIdArray *ids = JS_Enumerate (cx, obj);
+	unsigned int len = JS_IdArrayLength (cx, ids);
+	for (unsigned int i = 0; i < len; ++i) {
+		JS::RootedId id (cx, JS_IdArrayGet (cx, ids, i));
+		JS::RootedValue js_key (cx);
+		JS_IdToValue (cx, id, &js_key);
+		std::string key;
+		readJSValue (cx, key, js_key);
+
+		JS::RootedValue prop (cx);
+		JS_GetPropertyById (cx, obj, id, &prop);
+		T value;
+		readJSValue (cx, value, prop);
+
+		var.emplace (key, value);
+	}
+	JS_DestroyIdArray (cx, ids);
+}
+
 template <int n, typename... Args>
 struct ArgumentVector;
 

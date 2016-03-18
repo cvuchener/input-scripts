@@ -71,7 +71,7 @@ void EventDevice::readEvents ()
 
 		while (-1 == select (nfds, &set, nullptr, nullptr, nullptr)) {
 			if (errno != EAGAIN)
-				throw std::runtime_error ("select failed");
+				throw std::system_error (errno, std::system_category (), "select");
 		}
 
 		if (FD_ISSET (_fd, &set)) {
@@ -80,10 +80,18 @@ void EventDevice::readEvents ()
 				ret = libevdev_next_event (_dev, LIBEVDEV_READ_FLAG_NORMAL, &ev);
 
 				if (ret == LIBEVDEV_READ_STATUS_SUCCESS) {
-					eventRead (ev.type, ev.code, ev.value);
+					eventRead ({
+						{ "type", ev.type },
+						{ "code", ev.code },
+						{ "value", ev.value }
+					});
 				}
 				while (ret == LIBEVDEV_READ_STATUS_SYNC) {
-					eventRead (ev.type, ev.code, ev.value);
+					eventRead ({
+						{ "type", ev.type },
+						{ "code", ev.code },
+						{ "value", ev.value }
+					});
 					ret = libevdev_next_event (_dev, LIBEVDEV_READ_FLAG_SYNC, &ev);
 				}
 			} while (ret >= 0);
@@ -136,13 +144,12 @@ void EventDevice::grab (bool grab_mode)
 	}
 }
 
-int32_t EventDevice::getValue (uint16_t type, uint16_t code)
+InputDevice::Event EventDevice::getEvent (InputDevice::Event event)
 {
-	int value;
-	if (!libevdev_fetch_event_value (_dev, type, code, &value)) {
+	if (!libevdev_fetch_event_value (_dev, event["type"], event["code"], &event["value"])) {
 		throw std::invalid_argument ("Event type or code does not exist on this device");
 	}
-	return value;
+	return event;
 }
 
 const JSClass EventDevice::js_class = JS_HELPERS_CLASS("EventDevice", EventDevice);

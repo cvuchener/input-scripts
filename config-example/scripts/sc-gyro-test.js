@@ -15,7 +15,7 @@ function init () {
 
 	input.disableKeys ();
 	input.setSetting (SC.SettingTrackBall, SC.TrackBallOff);
-	input.setSetting (SC.SettingOrientationSensors, SC.SensorGyroQ);
+	input.setSetting (SC.SettingOrientationSensors, SC.OrientationQuaternion);
 }
 
 function mouseMove (axis, d) {
@@ -36,28 +36,28 @@ function finalize () {
 	input.setSetting (SC.SettingOrientationSensors, 0);
 }
 
-function event (type, code, value) {
-	switch (type) {
-	case EV_KEY:
-		switch (code) {
+function event (ev) {
+	switch (ev.type) {
+	case SC.EventBtn:
+		switch (ev.code) {
 		case SC.BtnTriggerLeft:
-			this.mouse.sendKey (BTN_RIGHT, value);
+			this.mouse.sendKey (BTN_RIGHT, ev.value);
 			this.moved = true;
 			break;
 		case SC.BtnTriggerRight:
-			this.mouse.sendKey (BTN_LEFT, value);
+			this.mouse.sendKey (BTN_LEFT, ev.value);
 			this.moved = true;
 			break;
 		}
 		break;
 
+	case SC.EventOrientation:
+		this.gyro_mouse.update (ev.w, ev.x, ev.y, ev.z);
+		break;
+
 	case EV_SYN:
-		this.gyro_mouse.update (input.getValue (EV_ABS, SC.AbsGyroQW),
-					input.getValue (EV_ABS, SC.AbsGyroQX),
-					input.getValue (EV_ABS, SC.AbsGyroQY),
-					input.getValue (EV_ABS, SC.AbsGyroQZ));
 		if (this.moved) {
-			this.mouse.sendSyn (code);
+			this.mouse.sendSyn (ev.code);
 			this.moved = false;
 		}
 	}

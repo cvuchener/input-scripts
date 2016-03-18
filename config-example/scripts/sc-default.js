@@ -8,5 +8,5 @@ function init () {
 function finalize () {
 }
 
-function event (type, code, value) {
+function event (ev) {
 }

@@ -32,7 +32,7 @@ public:
 	virtual void interrupt ();
 	virtual void readEvents ();
 
-	virtual int32_t getValue (uint16_t type, uint16_t code);
+	virtual InputDevice::Event getEvent (InputDevice::Event event);
 
 	virtual std::string driver () const;
 	virtual std::string name () const;
