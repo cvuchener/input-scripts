@@ -70,7 +70,7 @@ void EventDevice::readEvents ()
 		FD_SET (_pipe[0], &set);
 
 		while (-1 == select (nfds, &set, nullptr, nullptr, nullptr)) {
-			if (errno != EAGAIN)
+			if (errno != EINTR)
 				throw std::system_error (errno, std::system_category (), "select");
 		}
 
