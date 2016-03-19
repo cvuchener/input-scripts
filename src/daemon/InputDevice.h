@@ -35,6 +35,8 @@ public:
 	virtual void readEvents () = 0;
 
 	virtual Event getEvent (Event) = 0;
+	bool keyPressed (uint16_t code);
+	int32_t getAxisValue (uint16_t code);
 
 	virtual std::string driver () const = 0;
 	virtual std::string name () const = 0;

@@ -25,10 +25,8 @@ function event (ev) {
 		break;
 
 	case SC.EventTouchPad:
-		if (ev.code == SC.TouchPadRight &&
-		    input.getEvent ({ type: SC.EventBtn, code: SC.BtnTouchRight }).value == 1) {
+		if (ev.code == SC.TouchPadRight && input.keyPressed (SC.BtnTouchRight))
 			this.mouse_region.update ([ ev.x, -ev.y ]);
-		}
 		break;
 
 	case EV_SYN:

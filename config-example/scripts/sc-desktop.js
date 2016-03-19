@@ -102,10 +102,10 @@ function event (ev) {
 
 	case SC.EventTouchPad:
 		if (ev.code == SC.TouchPadLeft) {
-			if (input.getEvent ({ type: SC.EventBtn, code: SC.BtnTouchLeft }).value == 0)
-				this.dpad.updatePos ( ev.x, ev.y);
-			else
+			if (input.keyPressed (SC.BtnTouchLeft))
 				this.scroll_wheel.updatePos ( ev.x, ev.y);
+			else
+				this.dpad.updatePos ( ev.x, ev.y);
 		}
 		break;
 

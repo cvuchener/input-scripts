@@ -99,8 +99,7 @@ function touchButton (actuator, type, code, value, pressed) {
 function event (ev) {
 	switch (ev.type) {
 	case SC.EventBtn:
-		if (ev.code == SC.BtnClickLeft && ev.value == 0 &&
-		    input.getEvent ({ type: SC.EventBtn, code: SC.BtnTouchLeft }).value == 1)
+		if (ev.code == SC.BtnClickLeft && ev.value == 0 && input.keyPressed (SC.BtnTouchLeft))
 			this.dpad.release ();
 		// fall through
 	case SC.EventAbs:
@@ -108,9 +107,7 @@ function event (ev) {
 		break;
 
 	case SC.EventTouchPad:
-		if (ev.code == SC.TouchPadLeft &&
-		    input.getEvent ({ type: SC.EventBtn, code: SC.BtnTouchLeft }).value == 1 &&
-		    input.getEvent ({ type: SC.EventBtn, code: SC.BtnClickLeft }).value == 1)
+		if (ev.code == SC.TouchPadLeft && input.keyPressed (SC.BtnTouchLeft) && input.keyPressed (SC.BtnClickLeft))
 			this.dpad.updatePos (ev.x, ev.y);
 		break;
 	

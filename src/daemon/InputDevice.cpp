@@ -18,13 +18,35 @@
 
 #include "InputDevice.h"
 
+extern "C" {
+#include <linux/input.h>
+}
+
 InputDevice::~InputDevice ()
 {
+}
+
+bool InputDevice::keyPressed (uint16_t code)
+{
+	return getEvent ({
+		{ "type", EV_KEY },
+		{ "code", code }
+	})["value"] > 0;
+}
+
+int32_t InputDevice::getAxisValue (uint16_t code)
+{
+	return getEvent ({
+		{ "type", EV_ABS },
+		{ "code", code }
+	})["value"];
 }
 
 const JSClass InputDevice::js_class = JS_HELPERS_CLASS("InputDevice", InputDevice);
 
 const JSFunctionSpec InputDevice::js_fs[] = {
 	JS_HELPERS_METHOD("getEvent", InputDevice::getEvent),
+	JS_HELPERS_METHOD("keyPressed", InputDevice::keyPressed),
+	JS_HELPERS_METHOD("getAxisValue", InputDevice::getAxisValue),
 	JS_FS_END
 };
