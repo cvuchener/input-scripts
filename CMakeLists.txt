@@ -49,4 +49,5 @@ endmacro(_add_dbus_proxy)
 
 add_subdirectory(src/daemon)
 add_subdirectory(src/remote)
+add_subdirectory(doc/daemon)
 

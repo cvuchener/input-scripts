@@ -23,9 +23,20 @@
 
 #include <libevdev/libevdev.h>
 
+/**
+ * This class manages a event device from linux ABI.
+ *
+ * Events from this device are standard linux input events with
+ * "type", "code" and "value" entries.
+ */
 class EventDevice: public InputDevice
 {
 public:
+	/**
+	 * Create a device from the device node path.
+	 *
+	 * \param path A path to an event device node (usually /dev/input/eventX).
+	 */
 	EventDevice (const std::string &path);
 	virtual ~EventDevice ();
 
@@ -40,6 +51,14 @@ public:
 
 	virtual operator bool () const;
 
+	/**
+	 * Grab or ungrab the device.
+	 *
+	 * When grabbed other applications will not receive any event from
+	 * this device.
+	 *
+	 * \param grab_mode true for grabbing, false for ungrabbing.
+	 */
 	void grab (bool grab_mode);
 
 	static const JSClass js_class;
