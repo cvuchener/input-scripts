@@ -28,7 +28,9 @@ extern "C" {
 }
 
 SteamControllerDevice::SteamControllerDevice (SteamControllerReceiver *receiver):
-	_receiver (receiver)
+	_receiver (receiver),
+	_report_single_axis (true),
+	_report_linked_axes (false)
 {
 	receiver->inputReport = [this] (const std::array<uint8_t, 64> &report) {
 		_report_queue.push (report);
@@ -74,14 +76,17 @@ void SteamControllerDevice::readEvents ()
 			break;
 		uint32_t buttons = readLE<uint32_t> (&report[7]);
 		uint8_t triggers[2] = { report[11], report[12] };
-		int16_t left[2] = {
-			readLE<int16_t> (&report[16]),
-			readLE<int16_t> (&report[18])
+		int16_t touchpad[2][2] = {
+			{ // Left touchpad/stick
+				readLE<int16_t> (&report[16]),
+				readLE<int16_t> (&report[18])
+			},
+			{ // Right touchpad
+				readLE<int16_t> (&report[20]),
+				readLE<int16_t> (&report[22])
+			}
 		};
-		int16_t right[2] = {
-			readLE<int16_t> (&report[20]),
-			readLE<int16_t> (&report[22])
-		};
+		// 16 bits triggers are not available on wireless devices
 		//int16_t triggers_16[2] = {
 		//	readLE<int16_t> (&report[24]),
 		//	readLE<int16_t> (&report[26])
@@ -104,26 +109,38 @@ void SteamControllerDevice::readEvents ()
 		};
 
 		bool changed = false;
-		// Absolute axes
+		// Touchpads (and stick)
+		bool touchpad_changed[2] = { false };
+		static constexpr uint16_t AxisCodes[2][2] = {
+			{ AbsLeftX, AbsLeftY },
+			{ AbsRightX, AbsRightY }
+		};
+		static constexpr uint16_t TouchPadCodes[2] = { TouchPadLeft, TouchPadRight };
 		for (unsigned int i = 0; i < 2; ++i) {
-			if (std::abs (_state.left[i]-left[i]) > AxisFuzz) {
-				_state.left[i] = left[i];
-				eventRead ({
-					{ "type", EventAbs },
-					{ "code", AbsLeftX+i },
-					{ "value", left[i] }
-				});
-				changed = true;
+			for (unsigned int j = 0; j < 2; ++j) {
+				if (std::abs (_state.touchpad[i][j]-touchpad[i][j]) > AxisFuzz) {
+					_state.touchpad[i][j] = touchpad[i][j];
+					if (_report_single_axis) {
+						eventRead ({
+							{ "type", EventAbs },
+							{ "code", AxisCodes[i][j] },
+							{ "value", touchpad[i][j] }
+						});
+					}
+					touchpad_changed[i] = changed = true;
+				}
 			}
-			if (std::abs (_state.right[i]-right[i]) > AxisFuzz) {
-				_state.right[i] = right[i];
+			if (touchpad_changed[i] && _report_linked_axes) {
 				eventRead ({
-					{ "type", EventAbs },
-					{ "code", AbsRightX+i },
-					{ "value", right[i] }
+					{ "type", EventTouchPad },
+					{ "code", TouchPadCodes[i] },
+					{ "x", _state.touchpad[i][0] },
+					{ "y", _state.touchpad[i][1] }
 				});
-				changed = true;
 			}
+		}
+		// Triggers
+		for (unsigned int i = 0; i < 2; ++i) {
 			if (std::abs (_state.triggers[i]-triggers[i]) > TriggerFuzz) {
 				_state.triggers[i] = triggers[i];
 				eventRead ({
@@ -224,16 +241,16 @@ InputDevice::Event SteamControllerDevice::getEvent (InputDevice::Event event)
 		code = event["code"];
 		switch (code) {
 		case AbsLeftX:
-			event["value"] =  _state.left[0];
+			event["value"] =  _state.touchpad[0][0];
 			return event;
 		case AbsLeftY:
-			event["value"] =  _state.left[1];
+			event["value"] =  _state.touchpad[0][1];
 			return event;
 		case AbsRightX:
-			event["value"] =  _state.right[0];
+			event["value"] =  _state.touchpad[1][0];
 			return event;
 		case AbsRightY:
-			event["value"] =  _state.right[1];
+			event["value"] =  _state.touchpad[1][1];
 			return event;
 		case AbsLeftTrigger:
 			event["value"] =  _state.triggers[0];
@@ -287,6 +304,12 @@ std::string SteamControllerDevice::name () const
 std::string SteamControllerDevice::serial () const
 {
 	return _serial;
+}
+
+void SteamControllerDevice::setTouchPadEventMode (bool report_single_axis, bool report_linked_axes)
+{
+	_report_single_axis = report_single_axis;
+	_report_linked_axes = report_linked_axes;
 }
 
 void SteamControllerDevice::setSetting (uint8_t setting, uint16_t value)
@@ -363,6 +386,7 @@ SteamControllerDevice::operator bool () const
 const JSClass SteamControllerDevice::js_class = JS_HELPERS_CLASS("SteamControllerDevice", SteamControllerDevice);
 
 const JSFunctionSpec SteamControllerDevice::js_fs[] = {
+	JS_HELPERS_METHOD("setTouchPadEventMode", SteamControllerDevice::setTouchPadEventMode),
 	JS_HELPERS_METHOD("setSetting", SteamControllerDevice::setSetting),
 	JS_HELPERS_METHOD("enableKeys", SteamControllerDevice::enableKeys),
 	JS_HELPERS_METHOD("disableKeys", SteamControllerDevice::disableKeys),
@@ -397,6 +421,7 @@ const std::pair<std::string, int> SteamControllerDevice::js_int_const[] = {
 	DEFINE_CONSTANT (EventBtn),
 	DEFINE_CONSTANT (EventAbs),
 	DEFINE_CONSTANT (EventSensor),
+	DEFINE_CONSTANT (EventTouchPad),
 	DEFINE_CONSTANT (EventOrientation),
 	// enum Button
 	DEFINE_CONSTANT (BtnTriggerRight),
@@ -426,6 +451,9 @@ const std::pair<std::string, int> SteamControllerDevice::js_int_const[] = {
 	// enum Sensor
 	DEFINE_CONSTANT (SensorAccel),
 	DEFINE_CONSTANT (SensorGyro),
+	// enum TouchPad
+	DEFINE_CONSTANT (TouchPadLeft),
+	DEFINE_CONSTANT (TouchPadRight),
 	{ "", 0 }
 };
 

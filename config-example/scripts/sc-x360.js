@@ -10,6 +10,7 @@ function inverse (value) {
 function init () {
 	input.disableKeys ();
 	input.setSetting (SC.SettingTrackBall, SC.TrackBallOff);
+	input.setTouchPadEventMode (true, true);
 
 	this.uinput = new UInput ();
 	this.uinput.name = "Microsoft X-Box 360 pad";
@@ -96,22 +97,24 @@ function touchButton (actuator, type, code, value, pressed) {
 }
 
 function event (ev) {
-	if (ev.type == SC.EventBtn && ev.code == SC.BtnClickLeft && ev.value == 0 &&
-	    input.getEvent ({ type: SC.EventBtn, code: SC.BtnTouchLeft }).value == 1) {
-		this.dpad.release ();
-	}
 	switch (ev.type) {
 	case SC.EventBtn:
-	case EV_ABS:
+		if (ev.code == SC.BtnClickLeft && ev.value == 0 &&
+		    input.getEvent ({ type: SC.EventBtn, code: SC.BtnTouchLeft }).value == 1)
+			this.dpad.release ();
+		// fall through
+	case SC.EventAbs:
 		this.remapper.event (ev.type, ev.code, ev.value);
+		break;
+
+	case SC.EventTouchPad:
+		if (ev.code == SC.TouchPadLeft &&
+		    input.getEvent ({ type: SC.EventBtn, code: SC.BtnTouchLeft }).value == 1 &&
+		    input.getEvent ({ type: SC.EventBtn, code: SC.BtnClickLeft }).value == 1)
+			this.dpad.updatePos (ev.x, ev.y);
 		break;
 	
 	case EV_SYN:
-		if (input.getEvent ({ type: SC.EventBtn, code: SC.BtnTouchLeft }).value == 1 &&
-		    input.getEvent ({ type: SC.EventBtn, code: SC.BtnClickLeft }).value == 1) {
-			this.dpad.updatePos (input.getEvent ({ type: EV_ABS, code: SC.AbsLeftX }).value,
-					input.getEvent ({ type: EV_ABS, code: SC.AbsLeftY }).value);
-		}
 		this.uinput.sendSyn (ev.code);
 	}
 }

@@ -6,6 +6,7 @@ const SC = SteamControllerDevice;
 function init () {
 	input.disableKeys ();
 	input.setSetting (SC.SettingTrackBall, SC.TrackBallOn);
+	input.setTouchPadEventMode (false, true);
 
 	this.uinput = new UInput ();
 	this.uinput.name = "Valve Steam Controller Desktop Mode";
@@ -99,17 +100,16 @@ function event (ev) {
 		this.remapper.event (ev.type, ev.code, ev.value);
 		break;
 
+	case SC.EventTouchPad:
+		if (ev.code == SC.TouchPadLeft) {
+			if (input.getEvent ({ type: SC.EventBtn, code: SC.BtnTouchLeft }).value == 0)
+				this.dpad.updatePos ( ev.x, ev.y);
+			else
+				this.scroll_wheel.updatePos ( ev.x, ev.y);
+		}
+		break;
+
 	case EV_SYN:
-		if (input.getEvent ({ type: SC.EventBtn, code: SC.BtnTouchLeft }).value == 0) {
-			this.dpad.updatePos (
-				input.getEvent ({ type: SC.EventAbs, code: SC.AbsLeftX }).value,
-				input.getEvent ({ type: SC.EventAbs, code: SC.AbsLeftY }).value);
-		}
-		else {
-			this.scroll_wheel.updatePos (
-				input.getEvent ({ type: SC.EventAbs, code: SC.AbsLeftX }).value,
-				input.getEvent ({ type: SC.EventAbs, code: SC.AbsLeftY }).value);
-		}
 		this.uinput.sendSyn (ev.code);
 	}
 }

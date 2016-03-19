@@ -46,6 +46,8 @@ public:
 	virtual std::string name () const;
 	virtual std::string serial () const;
 
+	void setTouchPadEventMode (bool report_single_axis, bool report_linked_axes);
+
 	void setSetting (uint8_t setting, uint16_t value);
 	void enableKeys ();
 	void disableKeys ();
@@ -88,6 +90,7 @@ public:
 		EventBtn = EV_KEY,
 		EventAbs = EV_ABS,
 		EventSensor = EV_MAX+1,
+		EventTouchPad,
 		EventOrientation
 	};
 
@@ -125,6 +128,11 @@ public:
 		SensorGyro,
 	};
 
+	enum TouchPad {
+		TouchPadLeft,
+		TouchPadRight,
+	};
+
 	static constexpr int AxisFuzz = 16;
 	static constexpr int TriggerFuzz = 4;
 	static constexpr int SensorFuzz = 16;
@@ -140,10 +148,10 @@ private:
 	SteamControllerReceiver *_receiver;
 	bool _stop;
 	MTQueue<std::array<uint8_t, 64>> _report_queue;
+	bool _report_single_axis, _report_linked_axes;
 	struct {
 		uint32_t buttons;
-		int16_t left[2];
-		int16_t right[2];
+		int16_t touchpad[2][2];
 		int8_t triggers[2];
 		int16_t accel[3];
 		int16_t gyro[3];

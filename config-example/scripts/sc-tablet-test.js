@@ -3,6 +3,7 @@ const SC = SteamControllerDevice;
 
 function init () {
 	input.setSetting (SC.SettingTrackBall, SC.TrackBallOff);
+	input.setTouchPadEventMode (false, true);
 
 	this.mouse_region = Object.create (MouseRegion);
 	this.mouse_region.init (
@@ -23,13 +24,14 @@ function event (ev) {
 			this.mouse_region.release ();
 		break;
 
-	case EV_SYN:
-		if (input.getEvent ({ type: SC.EventBtn, code: SC.BtnTouchRight }).value == 1) {
-			this.mouse_region.update ([
-				input.getEvent ({ type: SC.EventAbs, code: SC.AbsRightX }).value,
-				-input.getEvent ({ type: SC.EventAbs, code: SC.AbsRightY }).value
-			]);
+	case SC.EventTouchPad:
+		if (ev.code == SC.TouchPadRight &&
+		    input.getEvent ({ type: SC.EventBtn, code: SC.BtnTouchRight }).value == 1) {
+			this.mouse_region.update ([ ev.x, -ev.y ]);
 		}
+		break;
+
+	case EV_SYN:
 		break;
 	}
 }
