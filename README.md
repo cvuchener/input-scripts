@@ -79,7 +79,7 @@ Note that the Steam Controller need read/write access to the hidraw nodes.
 
 Every script must contains at least three methods:
  - `init ()`: called when the script is loaded
- - `event (type, code, value)`: called for each input event
+ - `event (ev)`: called for each input event. `ev` always has a `type` property, other properties may vary depending on the driver and the event type. If the event type is a valid `EV_*` type from linux input events, it should have `code` and `value` properties.
  - `finalize ()`: called when the script is unloaded
 
 The scope object from the script is used as a prototype to create a script object (the functions are called as this object's methods).
