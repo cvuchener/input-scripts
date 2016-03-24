@@ -13,9 +13,6 @@ set(INPUT_SCRIPTS_SOURCES
 	InputDevice.cpp
 	event/EventDriver.cpp
 	event/EventDevice.cpp
-	steamcontroller/SteamControllerDriver.cpp
-	steamcontroller/SteamControllerReceiver.cpp
-	steamcontroller/SteamControllerDevice.cpp
 	Config.cpp
 	DBusConnections.cpp
 	main.cpp
@@ -23,6 +20,8 @@ set(INPUT_SCRIPTS_SOURCES
 
 _add_dbus_adaptor(INPUT_SCRIPTS_SOURCES ObjectManager)
 _add_dbus_adaptor(INPUT_SCRIPTS_SOURCES Script)
+
+add_subdirectory(steamcontroller)
 
 add_executable(input-scripts ${INPUT_SCRIPTS_SOURCES})
 
