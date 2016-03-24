@@ -37,6 +37,8 @@ public:
 
 private:
 	std::map<std::string, std::pair<SteamControllerReceiver *, std::thread>> _receivers;
+
+	static bool _registered;
 };
 
 #endif

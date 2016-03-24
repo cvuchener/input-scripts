@@ -25,3 +25,28 @@ Driver::Driver ()
 Driver::~Driver ()
 {
 }
+
+std::map<std::string, std::unique_ptr<Driver>> Driver::_drivers;
+
+Driver *Driver::findDriver (std::string name)
+{
+	auto it = _drivers.find (name);
+	if (it == _drivers.end ())
+		return nullptr;
+	return it->second.get ();
+}
+
+Driver::const_iterator Driver::begin ()
+{
+	return _drivers.begin ();
+}
+
+Driver::const_iterator Driver::end ()
+{
+	return _drivers.end ();
+}
+
+bool Driver::registerDriver (std::string name, Driver *driver)
+{
+	return _drivers.emplace (name, std::unique_ptr<Driver> (driver)).second;
+}

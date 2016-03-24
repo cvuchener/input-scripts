@@ -50,8 +50,6 @@ Options:
 
 static constexpr char ServiceName[] = "com.github.cvuchener.InputScripts";
 
-static std::map<std::string, Driver *> drivers;
-static ScriptManager *manager;
 static DBus::BusDispatcher dispatcher;
 
 static void sigint (int signal)
@@ -133,24 +131,19 @@ int main (int argc, char *argv[])
 	DBus::Connection &dbus_connection = DBusConnections::getBus (bus);
 	dbus_connection.request_name (ServiceName);
 
-	drivers.emplace ("event", new EventDriver ());
-	drivers.emplace ("steamcontroller", new SteamControllerDriver ());
+	{
+		ScriptManager manager (dbus_connection);
 
-	manager = new ScriptManager (dbus_connection, &drivers);
+		std::signal (SIGINT, sigint);
 
-	std::signal (SIGINT, sigint);
+		Udev udev;
+		std::thread udev_thread (&Udev::exec, &udev);
 
-	Udev udev (&drivers);
-	std::thread udev_thread (&Udev::exec, &udev);
+		dispatcher.enter ();
+		udev.interrupt ();
 
-	dispatcher.enter ();
-	udev.interrupt ();
-
-	udev_thread.join ();
-	delete manager;
-
-	for (auto pair: drivers)
-		delete pair.second;
+		udev_thread.join ();
+	}
 
 	JsHelpers::Thread::shutdown ();
 	return 0;

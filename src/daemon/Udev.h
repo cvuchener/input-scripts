@@ -22,20 +22,16 @@
 #include <map>
 #include <string>
 
-class Driver;
-
 class Udev
 {
 public:
-	Udev (const std::map<std::string, Driver *> *drivers);
+	Udev ();
 	~Udev ();
 
 	void interrupt ();
 	void exec ();
 
 private:
-
-	const std::map<std::string, Driver *> *_drivers;
 	enum {
 		Running,
 		Stopping,
