@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.1)
 project(input-scripts)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fdiagnostics-color")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -pg -O0 -Wall -fdiagnostics-color")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -pg -O0")
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -22,6 +22,13 @@ link_directories(
 	${DBUSCPP_LIBRARY_DIRS}
 	${JSONCPP_LIBRARY_DIRS}
 )
+
+macro(_concat_flags var)
+	set(${var} "")
+	foreach(flag ${ARGN})
+		set(${var} "${${var}} ${flag}")
+	endforeach()
+endmacro(_concat_flags)
 
 macro(_add_dbus_adaptor var name)
 	set(ADAPTOR_HEADER ${PROJECT_BINARY_DIR}/include/dbus/${name}InterfaceAdaptor.h)

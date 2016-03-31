@@ -25,13 +25,20 @@ _add_dbus_adaptor(INPUT_SCRIPTS_SOURCES ObjectManager)
 _add_dbus_adaptor(INPUT_SCRIPTS_SOURCES Script)
 
 add_executable(input-scripts ${INPUT_SCRIPTS_SOURCES})
+
+_concat_flags(INPUT_SCRIPTS_CFLAGS
+	${LIBEVDEV_CFLAGS}
+	${MOZJS_CFLAGS}
+	${LIBUDEV_CFLAGS}
+	${DBUSCPP_CFLAGS}
+	${JSONCPP_CFLAGS}
+)
+set_target_properties(input-scripts PROPERTIES
+	COMPILE_FLAGS "${INPUT_SCRIPTS_CFLAGS}"
+)
+
 target_include_directories(input-scripts PUBLIC
 	${PROJECT_BINARY_DIR}/include
-	${LIBEVDEV_INCLUDE_DIRS}
-	${MOZJS_INCLUDE_DIRS}
-	${LIBUDEV_INCLUDE_DIRS}
-	${DBUSCPP_INCLUDE_DIRS}
-	${JSONCPP_INCLUDE_DIRS}
 )
 
 target_link_libraries(input-scripts
