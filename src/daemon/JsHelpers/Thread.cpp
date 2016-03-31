@@ -68,7 +68,7 @@ static void errorReporter (JSContext *cx, const char *message, JSErrorReport *re
 
 void Thread::run ()
 {
-	JSRuntime *rt = JS_NewRuntime (8ul*1024ul*1024ul);
+	JSRuntime *rt = JS_NewRuntime (RuntimeMaxBytes, JS::DefaultNurseryBytes, _main_rt);
 	if (!rt) {
 		throw std::runtime_error ("JS_NewRuntime failed");
 	}
@@ -91,3 +91,25 @@ void Thread::run ()
 	JS_DestroyContext (cx);
 	JS_DestroyRuntime (rt);
 }
+
+void Thread::init ()
+{
+	if (!JS_Init ())
+		throw std::runtime_error ("JS_Init failed");
+
+	if (!(_main_rt = JS_NewRuntime (RuntimeMaxBytes)))
+		throw std::runtime_error("Main JS_NewRuntime failed");
+
+	if (!(_main_cx = JS_NewContext (_main_rt, 8192)))
+		throw std::runtime_error ("Main JS_NewContext failed");
+}
+
+void Thread::shutdown ()
+{
+	JS_DestroyContext (_main_cx);
+	JS_DestroyRuntime (_main_rt);
+	JS_ShutDown ();
+}
+
+JSRuntime *Thread::_main_rt = nullptr;
+JSContext *Thread::_main_cx = nullptr;

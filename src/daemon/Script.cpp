@@ -82,7 +82,10 @@ Script::~Script ()
 
 static const JSClass global_class = {
 	"global",
-	JSCLASS_GLOBAL_FLAGS
+	JSCLASS_GLOBAL_FLAGS,
+	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+	nullptr, nullptr, nullptr, nullptr,
+	JS_GlobalObjectTraceHook
 };
 
 void Script::readInputEvents (JSContext *cx, JS::HandleObject script_object)
@@ -157,7 +160,7 @@ void Script::run (JSContext *cx)
 	JSAutoRequest ar (cx);
 
 	JS::RootedObject global (cx);
-	global = JS_NewGlobalObject (cx, &global_class, nullptr, JS::DontFireOnNewGlobalHook);
+	global = JS_NewGlobalObject (cx, &global_class, nullptr, JS::FireOnNewGlobalHook);
 	if (!global) {
 		throw std::runtime_error ("JS_NewGlobalObject failed");
 	}

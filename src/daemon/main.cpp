@@ -28,6 +28,7 @@
 #include "Log.h"
 #include "Config.h"
 #include "DBusConnections.h"
+#include "JsHelpers/Thread.h"
 
 extern "C" {
 #include <unistd.h>
@@ -125,11 +126,7 @@ int main (int argc, char *argv[])
 	Log::setLevel (log_level);
 	Config::config.loadConfig (config_file);
 
-	if (!JS_Init ()) {
-		Log::debug () << "JS_Init failed" << std::endl;
-		return -1;
-	}
-
+	JsHelpers::Thread::init ();
 
 	DBus::_init_threading();
 	DBus::default_dispatcher = &dispatcher;
@@ -155,6 +152,6 @@ int main (int argc, char *argv[])
 	for (auto pair: drivers)
 		delete pair.second;
 
-	JS_ShutDown ();
+	JsHelpers::Thread::shutdown ();
 	return 0;
 }

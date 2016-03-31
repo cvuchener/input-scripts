@@ -51,6 +51,9 @@ public:
 
 	void execOnJsThreadAsync (std::function<void (void)> f);
 
+	static void init ();
+	static void shutdown ();
+
 protected:
 	void exec ();
 	virtual void run (JSContext *cx) = 0;
@@ -63,6 +66,10 @@ private:
 	JSContext *_cx;
 	MTQueue<std::function<void (void)>> _task_queue;
 	std::thread _thread;
+
+	static constexpr uint32_t RuntimeMaxBytes = 8ul*1024ul*1024ul;
+	static JSRuntime *_main_rt;
+	static JSContext *_main_cx;
 };
 
 }
