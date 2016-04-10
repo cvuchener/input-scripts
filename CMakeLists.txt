@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.1)
 project(input-scripts)
 
+option(WITH_STEAMCONTROLLER "Use Steam Controller driver" OFF)
+option(WITH_WIIMOTE "Use Wii Remote driver" OFF)
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fdiagnostics-color")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -pg -O0")
 
@@ -14,6 +17,9 @@ pkg_check_modules(MOZJS REQUIRED mozjs-38)
 pkg_check_modules(LIBUDEV REQUIRED libudev)
 pkg_check_modules(DBUSCPP REQUIRED dbus-c++-1)
 pkg_check_modules(JSONCPP REQUIRED jsoncpp)
+if(WITH_WIIMOTE)
+	pkg_check_modules(XWIIMOTE REQUIRED libxwiimote)
+endif()
 
 link_directories(
 	${LIBEVDEV_LIBRARY_DIRS}
@@ -21,6 +27,7 @@ link_directories(
 	${LIBUDEV_LIBRARY_DIRS}
 	${DBUSCPP_LIBRARY_DIRS}
 	${JSONCPP_LIBRARY_DIRS}
+	${XWIIMOTE_LIBRARY_DIRS}
 )
 
 macro(_concat_flags var)

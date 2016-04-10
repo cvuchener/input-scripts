@@ -34,6 +34,7 @@ public:
 	virtual ~Driver ();
 
 	virtual void addDevice (udev_device *) = 0;
+	virtual void changeDevice (udev_device *);
 	virtual void removeDevice (udev_device *) = 0;
 
 	std::function<void (InputDevice *)> inputDeviceAdded;

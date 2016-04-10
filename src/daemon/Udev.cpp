@@ -126,6 +126,8 @@ void Udev::exec () {
 				else {
 					if (action == "add")
 						driver->addDevice (device);
+					else if (action == "change")
+						driver->changeDevice (device);
 					else if (action == "remove")
 						driver->removeDevice (device);
 				}
