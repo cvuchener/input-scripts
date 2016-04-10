@@ -13,6 +13,7 @@ Compilation requires CMake and g++, and has the following dependencies:
  - libudev
  - dbus-c++
  - jsoncpp
+ - libxwiimote (only required by wiimote driver)
 
 Run:
 
@@ -22,6 +23,10 @@ cd build
 cmake ..
 make
 ```
+
+For compiling optional drivers, add to cmake options:
+ - `-DWITH_STEAMCONTROLLER=ON` for Steam Controller driver,
+ - `-DWITH_WIIMOTE=ON` for Wii Remote driver.
 
 
 Configuration
@@ -130,6 +135,7 @@ Drivers
 Currently supported devices are:
  - Generic Linux event devices
  - Valve's Steam Controller
+ - Wii remotes (any device supported by the wiimote kernel driver and libxwiimote)
 
 
 ### Event devices
@@ -144,6 +150,13 @@ TODO: API documentation (see src/daemon/event/EventDevice.h).
 This driver name is `steamcontroller`.
 
 TODO: API documentation (see src/daemon/steamcontroller/SteamControllerDevice.h).
+
+
+### Wii remotes
+
+This driver name is `wiimote`.
+
+TODO: API documentation (see src/daemon/wiimote/WiimoteDevice.h).
 
 
 Known issues
