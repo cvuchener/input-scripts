@@ -90,6 +90,10 @@ public:
 	 */
 	void disableKeys ();
 	/**
+	 * Enable the default hardware mouse (trackball emulation).
+	 */
+	void enableMouse ();
+	/**
 	 * Query the serial from the device.
 	 */
 	std::string querySerial ();
@@ -119,11 +123,30 @@ public:
 	 */
 	void playSound (int id);
 	/**
+	 * Reset the controller.
+	 *
+	 * This will disconnect the device and, thus, destroy this device object.
+	 * Then, the controller reconnects automatically.
+	 */
+	void reset ();
+	/**
 	 * Shutdown the controller.
 	 *
 	 * This will disconnect the device and, thus, destroy this device object.
 	 */
 	void shutdown ();
+	/**
+	 * Calibrate the touch pads.
+	 */
+	void calibrateTouchPads ();
+	/**
+	 * Calibrate the sensors.
+	 */
+	void calibrateSensors ();
+	/**
+	 * Calibrate the joystick.
+	 */
+	void calibrateJoystick ();
 
 	enum HapticActuator: uint8_t {
 		HapticLeft = 0x01,

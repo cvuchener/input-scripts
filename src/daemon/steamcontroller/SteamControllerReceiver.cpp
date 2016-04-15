@@ -20,6 +20,9 @@
 
 #include "SteamControllerDevice.h"
 
+#include "SteamControllerProtocol.h"
+using namespace SteamController;
+
 #include "../Log.h"
 
 extern "C" {
@@ -92,7 +95,7 @@ SteamControllerReceiver::SteamControllerReceiver (const std::string &path)
 
 	case 0x1142: // Wireless receiver
 		_connected = false;
-		sendRequest (0xb4, {}, nullptr);
+		sendRequest (RequestGetConnectionStatus, {});
 		break;
 
 	default:
@@ -162,14 +165,14 @@ void SteamControllerReceiver::parseReport (const std::array<uint8_t, 64> &report
 	uint8_t length = report[3];
 
 	switch (type) {
-	case 0x03:
+	case ReportConnection:
 		if (length != 1) {
 			Log::error () << "Steam Controller event with invalid length" << std::endl;
 			break;
 		}
 
 		switch (report[4]) {
-		case 0x01: // Disconnected event
+		case Disconnected:
 			if (_connected) {
 				_connected = false;
 				disconnected ();
@@ -178,7 +181,7 @@ void SteamControllerReceiver::parseReport (const std::array<uint8_t, 64> &report
 			}
 			break;
 
-		case 0x02: // Connected event
+		case Connected:
 			if (!_connected) {
 				_connected = true;
 				_device = new SteamControllerDevice (this);
@@ -186,7 +189,7 @@ void SteamControllerReceiver::parseReport (const std::array<uint8_t, 64> &report
 			}
 			break;
 
-		case 0x03: // Paired
+		case Paired:
 			Log::debug () << "Steam Controller Paired event" << std::endl;
 			break;
 
@@ -195,7 +198,7 @@ void SteamControllerReceiver::parseReport (const std::array<uint8_t, 64> &report
 		}
 		break;
 
-	case 0x01:
+	case ReportInput:
 		if (_connected) {
 			inputReport (report);
 		}

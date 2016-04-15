@@ -20,6 +20,9 @@
 
 #include "SteamControllerReceiver.h"
 
+#include "SteamControllerProtocol.h"
+using namespace SteamController;
+
 #include "../Log.h"
 
 extern "C" {
@@ -320,19 +323,22 @@ void SteamControllerDevice::setSetting (uint8_t setting, uint16_t value)
 	std::vector<uint8_t> params (3);
 	params[0] = setting;
 	writeLE (&params[1], value);
-	_receiver->sendRequest (0x87, params);
+	_receiver->sendRequest (RequestConfigure, params);
 }
 
 void SteamControllerDevice::enableKeys ()
 {
-	std::vector<uint8_t> params (0);
-	_receiver->sendRequest (0x85, params);
+	_receiver->sendRequest (RequestEnableKeys, {});
 }
 
 void SteamControllerDevice::disableKeys ()
 {
-	std::vector<uint8_t> params (0);
-	_receiver->sendRequest (0x81, params);
+	_receiver->sendRequest (RequestDisableKeys, {});
+}
+
+void SteamControllerDevice::enableMouse ()
+{
+	_receiver->sendRequest (RequestEnableMouse, {});
 }
 
 void SteamControllerDevice::hapticFeedback (uint8_t actuator, uint16_t amplitude, uint16_t period, uint16_t count)
@@ -342,22 +348,22 @@ void SteamControllerDevice::hapticFeedback (uint8_t actuator, uint16_t amplitude
 	writeLE (&params[1], amplitude);
 	writeLE (&params[3], period);
 	writeLE (&params[5], count);
-	_receiver->sendRequest (0x8f, params);
+	_receiver->sendRequest (RequestHapticFeedback, params);
 }
 
 std::string SteamControllerDevice::querySerial ()
 {
-	std::vector<uint8_t> params ({1}), results;
-	//params[0] = 1;
+	std::vector<uint8_t> params ({ControllerSerial}), results;
+	//params[0] = ControllerSerial;
 	do {
 		try {
-			_receiver->sendRequest (0xae, params, &results);
+			_receiver->sendRequest (RequestGetSerial, params, &results);
 		}
 		catch (std::runtime_error e) {
 			Log::warning () << "In " << __PRETTY_FUNCTION__ << ": "
 					<< e.what () << std::endl;
 		}
-	} while (results.size () < 1 || results[0] != 1);
+	} while (results.size () < 1 || results[0] != ControllerSerial);
 	results.push_back (0); // Make sure the string is null-terminated
 	return std::string (reinterpret_cast<char *> (&results[1]));
 }
@@ -366,19 +372,39 @@ void SteamControllerDevice::setSounds (const std::vector<int8_t> &sounds)
 {
 	std::vector<uint8_t> params (sounds.begin (), sounds.end ());
 	params.resize (16, -1);
-	_receiver->sendRequest (0xc1, params);
+	_receiver->sendRequest (RequestSetSounds, params);
 }
 
 void SteamControllerDevice::playSound (int id)
 {
 	std::vector<uint8_t> params (4);
 	writeLE<int32_t> (&params[0], id);
-	_receiver->sendRequest (0xb6, params);
+	_receiver->sendRequest (RequestPlaySound, params);
+}
+
+void SteamControllerDevice::reset ()
+{
+	_receiver->sendRequest (RequestReset, {});
 }
 
 void SteamControllerDevice::shutdown ()
 {
-	_receiver->sendRequest (0x9f, { 'o', 'f', 'f', '!' });
+	_receiver->sendRequest (RequestShutdown, { 'o', 'f', 'f', '!' });
+}
+
+void SteamControllerDevice::calibrateTouchPads ()
+{
+	_receiver->sendRequest (RequestCalibrateTouchPads, {});
+}
+
+void SteamControllerDevice::calibrateSensors ()
+{
+	_receiver->sendRequest (RequestCalibrateSensors, {});
+}
+
+void SteamControllerDevice::calibrateJoystick ()
+{
+	_receiver->sendRequest (RequestCalibrateJoystick, {});
 }
 
 SteamControllerDevice::operator bool () const
@@ -393,10 +419,15 @@ const JSFunctionSpec SteamControllerDevice::js_fs[] = {
 	JS_HELPERS_METHOD("setSetting", SteamControllerDevice::setSetting),
 	JS_HELPERS_METHOD("enableKeys", SteamControllerDevice::enableKeys),
 	JS_HELPERS_METHOD("disableKeys", SteamControllerDevice::disableKeys),
+	JS_HELPERS_METHOD("enableMouse", SteamControllerDevice::enableMouse),
 	JS_HELPERS_METHOD("hapticFeedback", SteamControllerDevice::hapticFeedback),
 	JS_HELPERS_METHOD("setSounds", SteamControllerDevice::setSounds),
 	JS_HELPERS_METHOD("playSound", SteamControllerDevice::playSound),
+	JS_HELPERS_METHOD("reset", SteamControllerDevice::reset),
 	JS_HELPERS_METHOD("shutdown", SteamControllerDevice::shutdown),
+	JS_HELPERS_METHOD("calibrateTouchPads", SteamControllerDevice::calibrateTouchPads),
+	JS_HELPERS_METHOD("calibrateSensors", SteamControllerDevice::calibrateSensors),
+	JS_HELPERS_METHOD("calibrateJoystick", SteamControllerDevice::calibrateJoystick),
 	JS_FS_END
 };
 
