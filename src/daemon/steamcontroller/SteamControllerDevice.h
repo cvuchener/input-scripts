@@ -225,23 +225,24 @@ public:
 	};
 
 	enum Button {
-		BtnTriggerRight = 8,
-		BtnTriggerLeft = 9,
-		BtnShoulderRight = 10,
-		BtnShoulderLeft = 11,
-		BtnY = 12,
-		BtnB = 13,
-		BtnX = 14,
-		BtnA = 15,
-		BtnSelect = 20,
-		BtnMode = 21,
-		BtnStart = 22,
-		BtnGripLeft = 23,
-		BtnGripRight = 24,
-		BtnClickLeft = 25,
-		BtnClickRight = 26,
-		BtnTouchLeft = 27,
-		BtnTouchRight = 28
+		BtnTriggerRight = 0,
+		BtnTriggerLeft = 1,
+		BtnShoulderRight = 2,
+		BtnShoulderLeft = 3,
+		BtnY = 4,
+		BtnB = 5,
+		BtnX = 6,
+		BtnA = 7,
+		BtnSelect = 12,
+		BtnMode = 13,
+		BtnStart = 14,
+		BtnGripLeft = 15,
+		BtnGripRight = 16,
+		BtnClickLeft = 17,
+		BtnClickRight = 18,
+		BtnTouchLeft = 19,
+		BtnTouchRight = 20,
+		BtnCount = 24
 	};
 
 	enum AbsAxis {

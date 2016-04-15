@@ -49,20 +49,20 @@ void SteamControllerDevice::interrupt ()
 	_report_queue.push (std::array<uint8_t, 64> ());
 }
 
-template <typename T>
+template <typename T, unsigned int size = sizeof (T)>
 static typename std::enable_if<std::is_integral<T>::value, T>::type
 readLE (uint8_t *buffer) {
 	T value = 0;
-	for (unsigned int i = 0; i < sizeof (T); ++i) {
+	for (unsigned int i = 0; i < size; ++i) {
 		value |= buffer[i] << (8*i);
 	}
 	return value;
 }
 
-template <typename T>
+template <typename T, unsigned int size = sizeof (T)>
 static typename std::enable_if<std::is_integral<T>::value>::type
 writeLE (uint8_t *buffer, T value) {
-	for (unsigned int i = 0; i < sizeof (T); ++i) {
+	for (unsigned int i = 0; i < size; ++i) {
 		buffer[i] = (value >> (8*i)) & 0xFF;
 	}
 }
@@ -74,7 +74,10 @@ void SteamControllerDevice::readEvents ()
 		std::array<uint8_t, 64> report = _report_queue.pop ();
 		if (_stop)
 			break;
-		uint32_t buttons = readLE<uint32_t> (&report[7]);
+		//uint8_t type = report[2];
+		//uint8_t length = report[3];
+		//uint32_t seq = readLE<uint32_t> (&report[4]);
+		uint32_t buttons = readLE<uint32_t, 3> (&report[8]);
 		uint8_t triggers[2] = { report[11], report[12] };
 		int16_t touchpad[2][2] = {
 			{ // Left touchpad/stick
@@ -204,7 +207,7 @@ void SteamControllerDevice::readEvents ()
 		// Buttons
 		uint32_t buttons_diff = buttons ^ _state.buttons;
 		_state.buttons = buttons;
-		for (unsigned int i = 0; i < 32; ++i) {
+		for (unsigned int i = 0; i < BtnCount; ++i) {
 			if (buttons_diff & (1<<i)) {
 				eventRead ({
 					{ "type", EventBtn },
@@ -232,7 +235,7 @@ InputDevice::Event SteamControllerDevice::getEvent (InputDevice::Event event)
 	switch (type) {
 	case EventBtn:
 		code = event["code"];
-		if (code < 0 || code >= 32)
+		if (code < 0 || code >= BtnCount)
 			throw std::invalid_argument ("invalid button code");
 		event["value"] = (_state.buttons & (1<<code)) >> code;
 		return event;
