@@ -130,8 +130,7 @@ struct MethodWrap<R (T::*) (Args...)>
 			JS_ReportError (cx, "Too few arguments (%d required)", sizeof...(Args));
 			return false;
 		}
-		constexpr auto call = &methodCall<T, R, Args...>::template call<method>;
-		typedef typename ArgConvert<R, Args...>::template Wrapper<call> wrapper;
+		typedef typename ArgConvert<R, Args...>::template Wrapper<methodCall<T, R, Args...>::template call<method>> wrapper;
 		R ret;
 		try {
 			ret = wrapper::call (cx, jsargs);
@@ -157,8 +156,7 @@ struct MethodWrap<void (T::*) (Args...)>
 			JS_ReportError (cx, "Too few arguments (%d required)", sizeof...(Args));
 			return false;
 		}
-		constexpr auto call = &methodCall<T, void, Args...>::template call<method>;
-		typedef typename ArgConvert<void, Args...>::template Wrapper<call> wrapper;
+		typedef typename ArgConvert<void, Args...>::template Wrapper<methodCall<T, void, Args...>::template call<method>> wrapper;
 		try {
 			wrapper::call (cx, jsargs);
 		}
@@ -183,8 +181,7 @@ struct MethodWrap<R (T::*) (Args...) const>
 			JS_ReportError (cx, "Too few arguments (%d required)", sizeof...(Args));
 			return false;
 		}
-		constexpr auto call = &constMethodCall<T, R, Args...>::template call<method>;
-		typedef typename ArgConvert<R, Args...>::template Wrapper<call> wrapper;
+		typedef typename ArgConvert<R, Args...>::template Wrapper<constMethodCall<T, R, Args...>::template call<method>> wrapper;
 		R ret;
 		try {
 			ret = wrapper::call (cx, jsargs);
@@ -210,8 +207,7 @@ struct MethodWrap<void (T::*) (Args...) const>
 			JS_ReportError (cx, "Too few arguments (%d required)", sizeof...(Args));
 			return false;
 		}
-		constexpr auto call = &constMethodCall<T, void, Args...>::template call<method>;
-		typedef typename ArgConvert<void, Args...>::template Wrapper<call> wrapper;
+		typedef typename ArgConvert<void, Args...>::template Wrapper<constMethodCall<T, void, Args...>::template call<method>> wrapper;
 		try {
 			wrapper::call (cx, jsargs);
 		}
@@ -249,8 +245,7 @@ bool constructorWrapper (JSContext *cx, unsigned int argc, JS::Value *vp)
 		return false;
 	}
 
-	constexpr auto call = &constructorCall<T, Args...>;
-	typedef typename ArgConvert<T *, Args...>::template Wrapper<call> wrapper;
+	typedef typename ArgConvert<T *, Args...>::template Wrapper<constructorCall<T, Args...>> wrapper;
 	T *ptr;
 	try {
 		ptr = wrapper::call (cx, jsargs);
