@@ -21,6 +21,8 @@
 
 #include "Functions.h"
 
+#include <cassert>
+
 #define STATIC_MEMBER_DETECTOR(member_type, name)                          \
 template <typename T>                                                      \
 class has_static_member_##name                                             \
@@ -78,12 +80,16 @@ typedef std::pair<std::string, int> IntConstantSpec;
 STATIC_ARRAY_MEMBER_DETECTOR(const IntConstantSpec *, js_int_const)
 STATIC_MEMBER_POINTER_OR_NULL(const IntConstantSpec *, js_int_const)
 
-template<typename T>
 class BaseClass
 {
 public:
-	BaseClass (JSContext *cx, JS::HandleObject obj, JS::HandleObject parent_proto, JSNative constructor, unsigned int nargs):
+	template<typename T>
+	class Type { };
+
+	template<typename T>
+	BaseClass (Type<T> &&, JSContext *cx, JS::HandleObject obj, JS::HandleObject parent_proto, JSNative constructor, unsigned int nargs):
 		_cx (cx),
+		_class (&T::js_class),
 		_proto (cx)
 	{
 		Log::debug () << "Initializing class " << T::js_class.name << std::endl;
@@ -108,8 +114,10 @@ public:
 		}
 	}
 
+	template <typename T>
 	JSObject *newObjectFromPointer (T *ptr) const
 	{
+		assert (&T::js_class == _class);
 		JSObject *obj = JS_NewObjectWithGivenProto (_cx, &T::js_class, _proto);
 		auto data = new std::pair<bool, T*> (false, ptr);
 		JS_SetPrivate (obj, data);
@@ -123,15 +131,16 @@ public:
 
 private:
 	JSContext *_cx;
+	const JSClass *_class;
 	JS::RootedObject _proto;
 };
 
 template<typename T>
-class AbstractClass: public BaseClass<T>
+class AbstractClass: public BaseClass
 {
 public:
 	AbstractClass (JSContext *cx, JS::HandleObject obj, JS::HandleObject parent_proto):
-		BaseClass<T> (cx, obj, parent_proto, &constructor, 0)
+		BaseClass (BaseClass::Type<T> (), cx, obj, parent_proto, &constructor, 0)
 	{
 	}
 
@@ -143,11 +152,11 @@ private:
 };
 
 template<typename T, typename... ConstructorArgs>
-class Class: public BaseClass<T>
+class Class: public BaseClass
 {
 public:
 	Class (JSContext *cx, JS::HandleObject obj, JS::HandleObject parent_proto):
-		BaseClass<T> (cx, obj, parent_proto,
+		BaseClass (BaseClass::Type<T> (), cx, obj, parent_proto,
 			&constructorWrapper<&T::js_class, T, ConstructorArgs...>,
 			sizeof... (ConstructorArgs))
 	{
