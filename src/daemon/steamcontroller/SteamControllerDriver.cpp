@@ -81,3 +81,4 @@ void SteamControllerDriver::removeDevice (udev_device *dev)
 	_receivers.erase (it);
 }
 
+bool SteamControllerDriver::_registered = Driver::registerDriver ("steamcontroller", new SteamControllerDriver ());

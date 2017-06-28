@@ -7,15 +7,13 @@ set(INPUT_SCRIPTS_SOURCES
 	ScriptManager.cpp
 	Script.cpp
 	System.cpp
+	ClassManager.cpp
 	classes/UInput.cpp
 	classes/DBusProxy.cpp
 	Driver.cpp
 	InputDevice.cpp
 	event/EventDriver.cpp
 	event/EventDevice.cpp
-	steamcontroller/SteamControllerDriver.cpp
-	steamcontroller/SteamControllerReceiver.cpp
-	steamcontroller/SteamControllerDevice.cpp
 	Config.cpp
 	DBusConnections.cpp
 	main.cpp
@@ -23,6 +21,13 @@ set(INPUT_SCRIPTS_SOURCES
 
 _add_dbus_adaptor(INPUT_SCRIPTS_SOURCES ObjectManager)
 _add_dbus_adaptor(INPUT_SCRIPTS_SOURCES Script)
+
+if(WITH_STEAMCONTROLLER)
+	add_subdirectory(steamcontroller)
+endif()
+if (WITH_WIIMOTE)
+	add_subdirectory(wiimote)
+endif()
 
 add_executable(input-scripts ${INPUT_SCRIPTS_SOURCES})
 
@@ -32,6 +37,7 @@ _concat_flags(INPUT_SCRIPTS_CFLAGS
 	${LIBUDEV_CFLAGS}
 	${DBUSCPP_CFLAGS}
 	${JSONCPP_CFLAGS}
+	${XWIIMOTE_CFLAGS}
 )
 set_target_properties(input-scripts PROPERTIES
 	COMPILE_FLAGS "${INPUT_SCRIPTS_CFLAGS}"
@@ -47,6 +53,7 @@ target_link_libraries(input-scripts
 	${LIBUDEV_LIBRARIES}
 	${DBUSCPP_LIBRARIES}
 	${JSONCPP_LIBRARIES}
+	${XWIIMOTE_LIBRARIES}
 	${CMAKE_THREAD_LIBS_INIT}
 )
 

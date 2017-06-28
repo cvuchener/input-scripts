@@ -16,41 +16,29 @@
  *
  */
 
-#include "Driver.h"
+#ifndef WIIMOTE_DRIVER_H
+#define WIIMOTE_DRIVER_H
 
-Driver::Driver ()
+#include "../Driver.h"
+
+#include <map>
+
+class WiimoteDevice;
+
+class WiimoteDriver: public Driver
 {
-}
+public:
+	WiimoteDriver ();
+	virtual ~WiimoteDriver ();
 
-Driver::~Driver ()
-{
-}
+	virtual void addDevice (udev_device *);
+	virtual void changeDevice (udev_device *);
+	virtual void removeDevice (udev_device *);
 
-void Driver::changeDevice (udev_device *)
-{
-}
+private:
+	std::map<std::string, WiimoteDevice *> _devices;
 
-std::map<std::string, std::unique_ptr<Driver>> Driver::_drivers;
+	static bool _registered;
+};
 
-Driver *Driver::findDriver (std::string name)
-{
-	auto it = _drivers.find (name);
-	if (it == _drivers.end ())
-		return nullptr;
-	return it->second.get ();
-}
-
-Driver::const_iterator Driver::begin ()
-{
-	return _drivers.begin ();
-}
-
-Driver::const_iterator Driver::end ()
-{
-	return _drivers.end ();
-}
-
-bool Driver::registerDriver (std::string name, Driver *driver)
-{
-	return _drivers.emplace (name, std::unique_ptr<Driver> (driver)).second;
-}
+#endif

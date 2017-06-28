@@ -86,6 +86,8 @@ private:
 	MTFunction<void (int)> _ff_start;
 	MTFunction<void (int)> _ff_stop;
 	MTFunction<void (int32_t)> _ff_set_gain;
+
+	static bool _registered;
 };
 
 #endif // UINPUT_H

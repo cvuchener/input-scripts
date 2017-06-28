@@ -36,6 +36,8 @@ public:
 
 private:
 	std::map<std::string, EventDevice *> _devices;
+
+	static bool _registered;
 };
 
 #endif

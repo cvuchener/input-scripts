@@ -27,13 +27,12 @@ constexpr char ScriptManager::DBusObjectPath[];
 
 using com::github::cvuchener::InputScripts::Script_adaptor;
 
-ScriptManager::ScriptManager (DBus::Connection &dbus_connection, const std::map<std::string, Driver *> *drivers):
+ScriptManager::ScriptManager (DBus::Connection &dbus_connection):
 	DBus::ObjectAdaptor (dbus_connection, DBusObjectPath),
-	_dbus_connection (dbus_connection),
-	_drivers (drivers)
+	_dbus_connection (dbus_connection)
 {
-	for (auto pair: *_drivers) {
-		Driver *driver = pair.second;
+	for (auto it = Driver::begin (); it != Driver::end (); ++it) {
+		Driver *driver = it->second.get ();
 		driver->inputDeviceAdded = std::bind (&ScriptManager::addDevice, this, std::placeholders::_1);
 		driver->inputDeviceRemoved = std::bind (&ScriptManager::removeDevice, this, std::placeholders::_1);
 	}

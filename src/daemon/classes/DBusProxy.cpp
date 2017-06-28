@@ -19,6 +19,7 @@
 #include "DBusProxy.h"
 
 #include "../DBusConnections.h"
+#include "../ClassManager.h"
 
 DBusProxy::DBusProxy (int bus, std::string service, std::string path, std::string interface):
 	DBus::InterfaceProxy (interface),
@@ -428,3 +429,5 @@ const std::pair<std::string, int> DBusProxy::js_int_const[] = {
 	{ "SessionBus", DBusConnections::SessionBus },
 	{ "", 0 }
 };
+
+bool DBusProxy::_registered = ClassManager::registerClass<DBusProxy::JsClass> ("DBusProxy");

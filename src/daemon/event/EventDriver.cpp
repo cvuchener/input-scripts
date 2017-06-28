@@ -53,3 +53,4 @@ void EventDriver::removeDevice (udev_device *dev)
 	_devices.erase (it);
 }
 
+bool EventDriver::_registered = Driver::registerDriver ("event", new EventDriver ());

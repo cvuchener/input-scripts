@@ -19,6 +19,7 @@
 #include "UInput.h"
 
 #include "../Log.h"
+#include "../ClassManager.h"
 
 extern "C" {
 #include <unistd.h>
@@ -392,3 +393,5 @@ const JSPropertySpec UInput::js_ps[] = {
 	JS_HELPERS_PROPERTY("version", UInput::version, UInput::setVersion),
 	JS_PS_END
 };
+
+bool UInput::_registered = ClassManager::registerClass<UInput::JsClass> ("UInput");

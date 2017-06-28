@@ -32,8 +32,7 @@ extern "C" {
 #define INPUT_SCRIPTS_UDEV_TAG	"input_scripts"
 #define INPUT_SCRIPTS_UDEV_DRIVER_PROP	"INPUT_SCRIPTS_DRIVER"
 
-Udev::Udev (const std::map<std::string, Driver *> *drivers):
-	_drivers (drivers),
+Udev::Udev ():
 	_state (Stopped)
 {
 	if (-1 == pipe2 (_pipe, O_CLOEXEC))
@@ -83,17 +82,17 @@ void Udev::exec () {
 	struct udev_list_entry *current;
 	udev_list_entry_foreach (current, udev_enumerate_get_list_entry (enumerate)) {
 		struct udev_device *device = udev_device_new_from_syspath (ctx, udev_list_entry_get_name (current));
-		std::string driver = udev_device_get_property_value (device, INPUT_SCRIPTS_UDEV_DRIVER_PROP);
-		Log::info () << "Found device " << udev_device_get_syspath (device) << " with driver " << driver << std::endl;
-		if (driver.empty ()) {
+		std::string driver_name = udev_device_get_property_value (device, INPUT_SCRIPTS_UDEV_DRIVER_PROP);
+		Log::info () << "Found device " << udev_device_get_syspath (device) << " with driver " << driver_name << std::endl;
+		if (driver_name.empty ()) {
 			Log::error () << "Missing " INPUT_SCRIPTS_UDEV_DRIVER_PROP " property" << std::endl;
 		}
 		else {
-			auto it = _drivers->find (driver);
-			if (it == _drivers->end ())
-				Log::error () << "Unknown driver " << driver << std::endl;
+			Driver *driver = Driver::findDriver (driver_name);
+			if (!driver)
+				Log::error () << "Unknown driver " << driver_name << std::endl;
 			else
-				it->second->addDevice (device);
+				driver->addDevice (device);
 		}
 		udev_device_unref (device);
 	}
@@ -114,21 +113,23 @@ void Udev::exec () {
 		if (FD_ISSET (fd, &fds)) {
 			struct udev_device *device = udev_monitor_receive_device (monitor);
 			std::string action = udev_device_get_action (device);
-			std::string driver = udev_device_get_property_value (device, INPUT_SCRIPTS_UDEV_DRIVER_PROP);
-			Log::info () << action << " device " << udev_device_get_syspath (device) << " with driver " << driver << std::endl;
-			if (driver.empty ()) {
+			std::string driver_name = udev_device_get_property_value (device, INPUT_SCRIPTS_UDEV_DRIVER_PROP);
+			Log::info () << action << " device " << udev_device_get_syspath (device) << " with driver " << driver_name << std::endl;
+			if (driver_name.empty ()) {
 				Log::error () << "Missing " INPUT_SCRIPTS_UDEV_DRIVER_PROP " property" << std::endl;
 			}
 			else {
-				auto it = _drivers->find (driver);
-				if (it == _drivers->end ()) {
-					Log::error () << "Unknown driver " << driver << std::endl;
+				Driver *driver = Driver::findDriver (driver_name);
+				if (!driver) {
+					Log::error () << "Unknown driver " << driver_name << std::endl;
 				}
 				else {
 					if (action == "add")
-						it->second->addDevice (device);
+						driver->addDevice (device);
+					else if (action == "change")
+						driver->changeDevice (device);
 					else if (action == "remove")
-						it->second->removeDevice (device);
+						driver->removeDevice (device);
 				}
 			}
 			udev_device_unref (device);

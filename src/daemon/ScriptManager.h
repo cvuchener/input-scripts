@@ -23,7 +23,6 @@
 #include <condition_variable>
 #include "dbus/ObjectManagerInterfaceAdaptor.h"
 
-class Driver;
 class InputDevice;
 class Script;
 
@@ -33,20 +32,17 @@ class ScriptManager:
 	public DBus::ObjectAdaptor
 {
 public:
-	ScriptManager (DBus::Connection &dbus_connection, const std::map<std::string, Driver *> *drivers);
+	ScriptManager (DBus::Connection &dbus_connection);
 	virtual ~ScriptManager ();
 
 	void addDevice (InputDevice *);
 	void removeDevice (InputDevice *);
-
 
 	virtual std::map<DBus::Path, std::map<std::string, std::map<std::string, DBus::Variant>>> GetManagedObjects ();
 	static constexpr char DBusObjectPath[] = "/com/github/cvuchener/InputScripts/ScriptManager";
 
 private:
 	DBus::Connection &_dbus_connection;
-	const std::map<std::string, Driver *> *_drivers;
-	//std::map<std::string, std::string> _default_script;
 	std::map<InputDevice *, Script *> _scripts;
 };
 

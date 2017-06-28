@@ -38,6 +38,7 @@ public:
 	typedef JsHelpers::Class<DBusProxy, int, std::string, std::string, std::string> JsClass;
 
 private:
+	static bool _registered;
 };
 
 #endif

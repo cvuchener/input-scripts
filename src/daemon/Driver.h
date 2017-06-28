@@ -20,6 +20,9 @@
 #define DRIVER_H
 
 #include <functional>
+#include <map>
+#include <string>
+#include <memory>
 
 struct udev_device;
 class InputDevice;
@@ -31,10 +34,22 @@ public:
 	virtual ~Driver ();
 
 	virtual void addDevice (udev_device *) = 0;
+	virtual void changeDevice (udev_device *);
 	virtual void removeDevice (udev_device *) = 0;
 
 	std::function<void (InputDevice *)> inputDeviceAdded;
 	std::function<void (InputDevice *)> inputDeviceRemoved;
+
+	static Driver *findDriver (std::string name);
+	typedef std::map<std::string, std::unique_ptr<Driver>>::const_iterator const_iterator;
+	static const_iterator begin ();
+	static const_iterator end ();
+
+protected:
+	static bool registerDriver (std::string name, Driver *driver);
+
+private:
+	static std::map<std::string, std::unique_ptr<Driver>> _drivers;
 };
 
 #endif
