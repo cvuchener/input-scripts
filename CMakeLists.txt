@@ -4,7 +4,7 @@ project(input-scripts)
 option(WITH_STEAMCONTROLLER "Use Steam Controller driver" OFF)
 option(WITH_WIIMOTE "Use Wii Remote driver" OFF)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fdiagnostics-color")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -pg -O0")
 
 set(CMAKE_CXX_STANDARD 11)
