@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Clément Vuchener
+ * Copyright 2017 Clément Vuchener
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,29 +16,14 @@
  *
  */
 
-#ifndef DBUS_PROXY_H
-#define DBUS_PROXY_H
+#include "ClassManager.h"
 
-#include <dbus-c++/dbus.h>
-#include "../JsHelpers/JsHelpers.h"
-
-class DBusProxy:
-	public DBus::InterfaceProxy,
-	public DBus::ObjectProxy
+std::map<std::string, std::unique_ptr<JsHelpers::BaseClass>> ClassManager::initClasses (JSContext *cx, JS::HandleObject obj)
 {
-public:
-	DBusProxy (int bus, std::string service, std::string path, std::string interface);
-	~DBusProxy ();
+	std::map<std::string, std::unique_ptr<JsHelpers::BaseClass>> classes;
+	for (const auto &p: _classes)
+		classes.emplace (p.first, p.second (cx, obj, JS::NullPtr ()));
+	return classes;
+}
 
-	bool call (JSContext *cx, JS::CallArgs &args);
-
-	static const JSClass js_class;
-	static const JSFunctionSpec js_fs[];
-	static const std::pair<std::string, int> js_int_const[];
-	typedef JsHelpers::Class<DBusProxy, int, std::string, std::string, std::string> JsClass;
-
-private:
-	static bool _registered;
-};
-
-#endif
+std::map<std::string, std::function<ClassManager::Factory>> ClassManager::_classes;

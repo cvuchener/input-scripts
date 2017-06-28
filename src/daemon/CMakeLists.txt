@@ -7,6 +7,7 @@ set(INPUT_SCRIPTS_SOURCES
 	ScriptManager.cpp
 	Script.cpp
 	System.cpp
+	ClassManager.cpp
 	classes/UInput.cpp
 	classes/DBusProxy.cpp
 	Driver.cpp

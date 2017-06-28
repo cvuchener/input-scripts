@@ -26,8 +26,7 @@
 #include "Log.h"
 #include "Config.h"
 
-#include "classes/UInput.h"
-#include "classes/DBusProxy.h"
+#include "ClassManager.h"
 
 #include "System.h"
 
@@ -176,9 +175,9 @@ void Script::run (JSContext *cx)
 
 	// import function
 	JS_DefineFunction (cx, global, "importScript", importJSScript, 1, JSPROP_READONLY | JSPROP_PERMANENT);
+
 	// C++ classes
-	UInput::JsClass uinput_class (cx, global, JS::NullPtr ());
-	DBusProxy::JsClass dbus_client_class (cx, global, JS::NullPtr ());
+	auto cppclasses = ClassManager::initClasses (cx, global);
 
 	// System object
 	System system (this);
