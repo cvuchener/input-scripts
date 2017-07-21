@@ -42,7 +42,7 @@ namespace JsHelpers
 {
 
 // Assigning C++ values to JS::Value
-inline void setJSValue (JSContext *cx, JS::MutableHandleValue var, std::string str)
+inline void setJSValue (JSContext *cx, JS::MutableHandleValue var, const std::string &str)
 {
 	var.setString (JS_NewStringCopyZ (cx, str.c_str ()));
 }
@@ -60,7 +60,19 @@ inline void setJSValue (JSContext *cx, JS::MutableHandleValue var, double value)
 }
 
 template <typename T>
-inline void setJSValue (JSContext *cx, JS::MutableHandleValue var, std::map<std::string, T> properties)
+inline void setJSValue (JSContext *cx, JS::MutableHandleValue var, const std::vector<T> &array)
+{
+	JS::RootedObject obj (cx, JS_NewArrayObject (cx, array.size ()));
+	for (unsigned i = 0; i < array.size (); ++i) {
+		JS::RootedValue elem (cx);
+		setJSValue (cx, &elem, array.at (i));
+		JS_SetElement (cx, obj, i, elem);
+	}
+	var.setObject (*obj);
+}
+
+template <typename T>
+inline void setJSValue (JSContext *cx, JS::MutableHandleValue var, const std::map<std::string, T> &properties)
 {
 	JS::RootedObject obj (cx, JS_NewObject (cx, nullptr));
 	for (const auto &pair: properties) {
