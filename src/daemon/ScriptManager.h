@@ -20,6 +20,7 @@
 #define SCRIPT_MANAGER_H
 
 #include <map>
+#include <memory>
 #include <condition_variable>
 #include "dbus/ObjectManagerInterfaceAdaptor.h"
 
@@ -43,7 +44,8 @@ public:
 
 private:
 	DBus::Connection &_dbus_connection;
-	std::map<InputDevice *, Script *> _scripts;
+	std::mutex _mutex;
+	std::map<InputDevice *, std::unique_ptr<Script>> _scripts;
 };
 
 #endif

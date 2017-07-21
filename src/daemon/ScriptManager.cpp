@@ -40,10 +40,13 @@ ScriptManager::ScriptManager (DBus::Connection &dbus_connection):
 
 ScriptManager::~ScriptManager ()
 {
-	for (auto pair: _scripts) {
-		pair.second->stop ();
-		delete pair.second;
+	for (auto it = Driver::begin (); it != Driver::end (); ++it) {
+		Driver *driver = it->second.get ();
+		driver->inputDeviceAdded = [] (InputDevice *) {};
+		driver->inputDeviceRemoved = [] (InputDevice *) {};
 	}
+	for (auto &pair: _scripts)
+		pair.second->stop ();
 }
 
 static std::map<std::string, std::map<std::string, DBus::Variant>> getScriptProperties (Script *script)
@@ -63,37 +66,53 @@ static std::map<std::string, std::map<std::string, DBus::Variant>> getScriptProp
 
 void ScriptManager::addDevice (InputDevice *device)
 {
+	std::unique_lock<std::mutex> lock (_mutex);
 	static int next_device = 0;
 	std::stringstream name;
 	name << "Device" << (next_device++);
-	Log::info () << "Add new device script for "
+	Log::info () << "Add new device script "
+		     << name.str () << " for "
 		     << device->driver () << "/"
 		     << device->name () << "/"
 		     << device->serial () << std::endl;
 	std::stringstream path;
 	path << DBusObjectPath << "/" << name.str ();
-	Script *script = new Script (_dbus_connection, path.str (), device);
-	_scripts.emplace (device, script);
 
+	auto ret = _scripts.emplace (device, std::make_unique<Script> (
+		_dbus_connection,
+		path.str (),
+		device
+	));
+	if (!ret.second) {
+		Log::error () << "Device already added." << std::endl;
+		return;
+	}
+
+	Script *script = ret.first->second.get ();
 	InterfacesAdded (path.str (), getScriptProperties (script));
-
 	script->start ();
 }
 
 void ScriptManager::removeDevice (InputDevice *device)
 {
+	std::unique_lock<std::mutex> lock (_mutex);
 	Log::info () << "Remove device script for "
 		     << device->driver () << "/"
 		     << device->name () << "/"
 		     << device->serial () << std::endl;
-	Script *script = _scripts[device];
+
+	auto it = _scripts.find (device);
+	if (it == _scripts.end ()) {
+		Log::error () << "Failed to remove unknown device." << std::endl;
+		return;
+	}
+	Script *script = it->second.get ();
 
 	DBus::Path path = script->path ();
 	std::string interface_name = script->Script_adaptor::introspect ()->name;
 
 	script->stop ();
-	delete script;
-	_scripts.erase (device);
+	_scripts.erase (it);
 
 	InterfacesRemoved (path, { interface_name });
 }
@@ -101,8 +120,8 @@ void ScriptManager::removeDevice (InputDevice *device)
 std::map<DBus::Path, std::map<std::string, std::map<std::string, DBus::Variant>>> ScriptManager::GetManagedObjects ()
 {
 	std::map<DBus::Path, std::map<std::string, std::map<std::string, DBus::Variant>>> objects;
-	for (auto pair: _scripts) {
-		Script *script = pair.second;
+	for (const auto &pair: _scripts) {
+		Script *script = pair.second.get ();
 		objects.emplace (script->path (), getScriptProperties (script));
 	}
 	return objects;
