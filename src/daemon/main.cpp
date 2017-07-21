@@ -52,7 +52,7 @@ static constexpr char ServiceName[] = "com.github.cvuchener.InputScripts";
 
 static DBus::BusDispatcher dispatcher;
 
-static void sigint (int signal)
+static void signal_handler (int signal)
 {
 	dispatcher.leave ();
 }
@@ -134,7 +134,8 @@ int main (int argc, char *argv[])
 	{
 		ScriptManager manager (dbus_connection);
 
-		std::signal (SIGINT, sigint);
+		std::signal (SIGINT, signal_handler);
+		std::signal (SIGTERM, signal_handler);
 
 		Udev udev;
 		std::thread udev_thread (&Udev::exec, &udev);
