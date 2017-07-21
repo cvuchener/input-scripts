@@ -48,8 +48,7 @@ SteamControllerDevice::~SteamControllerDevice ()
 
 void SteamControllerDevice::interrupt ()
 {
-	_stop = true;
-	_report_queue.push (std::array<uint8_t, 64> ());
+	_report_queue.interrupt ();
 }
 
 template <typename T, unsigned int size = sizeof (T)>
@@ -72,11 +71,10 @@ writeLE (uint8_t *buffer, T value) {
 
 void SteamControllerDevice::readEvents ()
 {
-	_stop = false;
-	while (!_stop) {
-		std::array<uint8_t, 64> report = _report_queue.pop ();
-		if (_stop)
-			break;
+	_report_queue.resetInterruption ();
+	while (auto opt = _report_queue.pop ()) {
+		std::array<uint8_t, 64> &report = opt.value ();
+
 		//uint8_t type = report[2];
 		//uint8_t length = report[3];
 		//uint32_t seq = readLE<uint32_t> (&report[4]);

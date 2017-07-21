@@ -55,7 +55,9 @@ void Thread::execOnJsThreadAsync (std::function<void (void)> f)
 void Thread::exec ()
 {
 	while (!_stopping) {
-		_task_queue.pop () ();
+		auto opt = _task_queue.pop ();
+		if (opt)
+			opt.value () ();
 	}
 }
 

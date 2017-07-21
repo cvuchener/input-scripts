@@ -300,7 +300,6 @@ public:
 
 private:
 	SteamControllerReceiver *_receiver;
-	bool _stop;
 	MTQueue<std::array<uint8_t, 64>> _report_queue;
 	bool _report_single_axis, _report_linked_axes;
 	struct {

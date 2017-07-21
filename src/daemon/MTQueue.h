@@ -19,16 +19,21 @@
 #ifndef MT_QUEUE_H
 #define MT_QUEUE_H
 
-#include <condition_variable>
 #include <queue>
+#include <mutex>
+#include <condition_variable>
+#include <experimental/optional>
+namespace std { template<typename T> using optional = experimental::optional<T>; }
 
-#include <iostream>
-
-template <typename Item>
+/**
+ * Interruptible queue for transfering data across different thread.
+ */
+template <typename T>
 class MTQueue
 {
 public:
-	MTQueue ()
+	MTQueue ():
+		_interrupted (false)
 	{
 	}
 
@@ -36,29 +41,81 @@ public:
 	{
 	}
 
-	void push (Item item)
+	/**
+	 * Push an item in the queue.
+	 */
+	void push (const T &item)
 	{
 		std::unique_lock<std::mutex> lock (_mutex);
 		_queue.push (item);
 		lock.unlock ();
+		_condvar.notify_one ();
+	}
+
+	/**
+	 * Pop an item from the queue.
+	 *
+	 * This method will block until an item
+	 * is available unless it is interrupted.
+	 *
+	 * \see interrupt()
+	 */
+	std::optional<T> pop ()
+	{
+		std::unique_lock<std::mutex> lock (_mutex);
+		std::optional<T> ret;
+		while (_queue.empty () && !_interrupted)
+			_condvar.wait (lock);
+		if (!_interrupted) {
+			ret = std::move (_queue.front ());
+			_queue.pop ();
+		}
+		return ret;
+	}
+
+	/**
+	 * Try to pop an item from the queue.
+	 *
+	 * If the queue is empty, an empty optional is returned.
+	 */
+	std::optional<T> try_pop ()
+	{
+		std::unique_lock<std::mutex> lock (_mutex);
+		std::optional<T> ret;
+		if(!_queue.empty ()) {
+			ret = std::move (_queue.front ());
+			_queue.pop ();
+		}
+		return ret;
+	}
+
+	/**
+	 * Make the current and future calls to pop() return
+	 * immediately with an empty value.
+	 *
+	 * \see resetInterruption()
+	 */
+	void interrupt ()
+	{
+		_interrupted = true;
 		_condvar.notify_all ();
 	}
 
-	Item pop ()
+	/**
+	 * Cancel the effect of interrupt().
+	 *
+	 * Future calls to pop(), will block again.
+	 */
+	void resetInterruption ()
 	{
-		std::unique_lock<std::mutex> lock (_mutex);
-		while (_queue.empty ()) {
-			_condvar.wait (lock);
-		}
-		Item item = _queue.front ();
-		_queue.pop ();
-		return item;
+		_interrupted = false;
 	}
 
 private:
 	std::mutex _mutex;
 	std::condition_variable _condvar;
-	std::queue<Item> _queue;
+	std::queue<T> _queue;
+	bool _interrupted;
 };
 
 #endif

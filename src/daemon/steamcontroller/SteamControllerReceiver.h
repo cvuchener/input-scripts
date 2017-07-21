@@ -21,8 +21,9 @@
 
 #include <functional>
 #include <array>
+#include <vector>
+#include <mutex>
 #include <cstdint>
-#include "../MTQueue.h"
 
 class SteamControllerDevice;
 
