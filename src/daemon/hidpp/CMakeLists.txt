@@ -1,0 +1,6 @@
+set (INPUT_SCRIPTS_SOURCES ${INPUT_SCRIPTS_SOURCES}
+	hidpp/HIDPPDriver.cpp
+	hidpp/HIDPP10Device.cpp
+	hidpp/HIDPP20Device.cpp
+	PARENT_SCOPE
+)

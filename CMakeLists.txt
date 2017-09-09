@@ -3,9 +3,9 @@ project(input-scripts)
 
 option(WITH_STEAMCONTROLLER "Use Steam Controller driver" OFF)
 option(WITH_WIIMOTE "Use Wii Remote driver" OFF)
+option(WITH_HIDPP "Use HID++ driver" OFF)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -pg -O0")
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -19,6 +19,9 @@ pkg_check_modules(DBUSCPP REQUIRED dbus-c++-1)
 pkg_check_modules(JSONCPP REQUIRED jsoncpp)
 if(WITH_WIIMOTE)
 	pkg_check_modules(XWIIMOTE REQUIRED libxwiimote)
+endif()
+if(WITH_HIDPP)
+	pkg_check_modules(HIDPP REQUIRED hidpp)
 endif()
 
 link_directories(

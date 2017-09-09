@@ -28,6 +28,9 @@ endif()
 if (WITH_WIIMOTE)
 	add_subdirectory(wiimote)
 endif()
+if (WITH_HIDPP)
+	add_subdirectory(hidpp)
+endif()
 
 add_executable(input-scripts ${INPUT_SCRIPTS_SOURCES})
 
@@ -38,6 +41,7 @@ _concat_flags(INPUT_SCRIPTS_CFLAGS
 	${DBUSCPP_CFLAGS}
 	${JSONCPP_CFLAGS}
 	${XWIIMOTE_CFLAGS}
+	${HIDPP_CFLAGS}
 )
 set_target_properties(input-scripts PROPERTIES
 	COMPILE_FLAGS "${INPUT_SCRIPTS_CFLAGS}"
@@ -54,6 +58,7 @@ target_link_libraries(input-scripts
 	${DBUSCPP_LIBRARIES}
 	${JSONCPP_LIBRARIES}
 	${XWIIMOTE_LIBRARIES}
+	${HIDPP_LIBRARIES}
 	${CMAKE_THREAD_LIBS_INIT}
 )
 
