@@ -201,27 +201,27 @@ void UInput::sendEvent (uint16_t type, uint16_t code, int32_t value)
 		throw std::system_error (errno, std::system_category (), "write");
 }
 
-void UInput::setFFUploadEffect (MTFunction<void (int, std::map<std::string, int>)> ff_upload_effect)
+void UInput::setFFUploadEffect (std::function<void (int, std::map<std::string, int>)> ff_upload_effect)
 {
 	_ff_upload_effect = ff_upload_effect;
 }
 
-void UInput::setFFEraseEffect (MTFunction<void (int)> ff_erase_effect)
+void UInput::setFFEraseEffect (std::function<void (int)> ff_erase_effect)
 {
 	_ff_erase_effect = ff_erase_effect;
 }
 
-void UInput::setFFStart (MTFunction<void (int)> ff_start)
+void UInput::setFFStart (std::function<void (int)> ff_start)
 {
 	_ff_start = ff_start;
 }
 
-void UInput::setFFStop (MTFunction<void (int)> ff_stop)
+void UInput::setFFStop (std::function<void (int)> ff_stop)
 {
 	_ff_stop = ff_stop;
 }
 
-void UInput::setFFSetGain (MTFunction<void (int32_t)> ff_set_gain)
+void UInput::setFFSetGain (std::function<void (int32_t)> ff_set_gain)
 {
 	_ff_set_gain = ff_set_gain;
 }

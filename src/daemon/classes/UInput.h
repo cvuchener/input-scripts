@@ -61,11 +61,11 @@ public:
 	void sendSyn (uint16_t code = 0);
 	void sendEvent (uint16_t type, uint16_t code, int32_t value);
 
-	void setFFUploadEffect (MTFunction<void (int, std::map<std::string, int>)>);
-	void setFFEraseEffect (MTFunction<void (int)>);
-	void setFFStart (MTFunction<void (int)>);
-	void setFFStop (MTFunction<void (int)>);
-	void setFFSetGain (MTFunction<void (int32_t)>);
+	void setFFUploadEffect (std::function<void (int, std::map<std::string, int>)>);
+	void setFFEraseEffect (std::function<void (int)>);
+	void setFFStart (std::function<void (int)>);
+	void setFFStop (std::function<void (int)>);
+	void setFFSetGain (std::function<void (int32_t)>);
 
 	static const JSClass js_class;
 	static const JSFunctionSpec js_fs[];
@@ -81,11 +81,11 @@ private:
 	int _fd;
 	int _pipe[2];
 	std::thread _thread;
-	MTFunction<void (int, std::map<std::string, int>)> _ff_upload_effect;
-	MTFunction<void (int)> _ff_erase_effect;
-	MTFunction<void (int)> _ff_start;
-	MTFunction<void (int)> _ff_stop;
-	MTFunction<void (int32_t)> _ff_set_gain;
+	std::function<void (int, std::map<std::string, int>)> _ff_upload_effect;
+	std::function<void (int)> _ff_erase_effect;
+	std::function<void (int)> _ff_start;
+	std::function<void (int)> _ff_stop;
+	std::function<void (int32_t)> _ff_set_gain;
 
 	static bool _registered;
 };

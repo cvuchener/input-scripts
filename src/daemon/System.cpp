@@ -36,7 +36,7 @@ System::~System ()
 {
 }
 
-void System::setTimeout (MTFunction<void ()> callback, unsigned int delay)
+void System::setTimeout (std::function<void ()> callback, unsigned int delay)
 {
 	std::unique_lock<std::mutex> lock (_timers_mutex);
 	_timers.emplace_back (std::chrono::milliseconds (delay));

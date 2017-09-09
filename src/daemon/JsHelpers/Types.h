@@ -28,16 +28,6 @@
 
 #include "../Log.h"
 
-template <typename Sig>
-class MTFunction: public std::function<Sig>
-{
-public:
-	MTFunction () { }
-
-	template <typename F>
-	MTFunction (F f): std::function<Sig> (f) { }
-};
-
 namespace JsHelpers
 {
 
@@ -189,7 +179,7 @@ struct ArgumentVector<n>
 };
 
 template <typename R, typename... Args>
-inline void readJSValue (JSContext *cx, MTFunction<R (Args...)> &var, JS::HandleValue value)
+inline void readJSValue (JSContext *cx, std::function<R (Args...)> &var, JS::HandleValue value)
 {
 	std::shared_ptr<JS::PersistentRootedValue> fun (new JS::PersistentRootedValue (cx, value));
 	Thread *thread = static_cast<Thread *> (JS_GetContextPrivate (cx));
@@ -208,7 +198,7 @@ inline void readJSValue (JSContext *cx, MTFunction<R (Args...)> &var, JS::Handle
 }
 
 template <typename... Args>
-inline void readJSValue (JSContext *cx, MTFunction<void (Args...)> &var, JS::HandleValue value)
+inline void readJSValue (JSContext *cx, std::function<void (Args...)> &var, JS::HandleValue value)
 {
 	std::shared_ptr<JS::PersistentRootedValue> fun (new JS::PersistentRootedValue (cx, value));
 	Thread *thread = static_cast<Thread *> (JS_GetContextPrivate (cx));
