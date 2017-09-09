@@ -22,63 +22,27 @@
 #include "Functions.h"
 
 #include <cassert>
+#include <experimental/type_traits>
 
-#define STATIC_MEMBER_DETECTOR(member_type, name)                          \
-template <typename T>                                                      \
-class has_static_member_##name                                             \
-{                                                                          \
-	template <typename U, U *> struct check_t;                         \
-                                                                           \
-	template <typename U>                                              \
-	static std::true_type test (check_t<member_type, &U::name> *);     \
-                                                                           \
-	template <typename U>                                              \
-	static std::false_type test (...);                                 \
-                                                                           \
-public:                                                                    \
-	static constexpr bool value = decltype (test<T> (0))::value;       \
-};
-
-#define STATIC_ARRAY_MEMBER_DETECTOR(member_type, name)                    \
-template <typename T>                                                      \
-class has_static_member_##name                                             \
-{                                                                          \
-	template <typename U, U> struct check_t;                           \
-                                                                           \
-	template <typename U>                                              \
-	static std::true_type test (check_t<member_type, U::name> *);      \
-                                                                           \
-	template <typename U>                                              \
-	static std::false_type test (...);                                 \
-                                                                           \
-public:                                                                    \
-	static constexpr bool value = decltype (test<T> (0))::value;       \
-};
-
-#define STATIC_MEMBER_POINTER_OR_NULL(member_type, name)                        \
-template <typename T>                                                           \
-typename std::enable_if<has_static_member_##name<T>::value, member_type>::type  \
-static_member_pointer_or_null_##name ()                                         \
-{ return T::name; }                                                             \
-template <typename T>                                                           \
-typename std::enable_if<!has_static_member_##name<T>::value, member_type>::type \
-static_member_pointer_or_null_##name ()                                         \
-{ return nullptr; }
+#define STATIC_ARRAY_POINTER_OR_NULL(name) \
+template<typename T> \
+using has_##name##_member_t = typename std::remove_extent<decltype (T::name)>::type; \
+template<typename T, typename Class> \
+std::enable_if_t<std::is_same<T, std::experimental::detected_t<has_##name##_member_t, Class>>::value, T *> \
+static_array_pointer_or_null_##name () { return Class::name; }; \
+template<typename T, typename Class> \
+std::enable_if_t<!std::is_same<T, std::experimental::detected_t<has_##name##_member_t, Class>>::value, T *> \
+static_array_pointer_or_null_##name () { return nullptr; };
 
 namespace JsHelpers
 {
 
-STATIC_ARRAY_MEMBER_DETECTOR(const JSPropertySpec *, js_ps)
-STATIC_MEMBER_POINTER_OR_NULL(const JSPropertySpec *, js_ps)
-STATIC_ARRAY_MEMBER_DETECTOR(const JSFunctionSpec *, js_fs)
-STATIC_MEMBER_POINTER_OR_NULL(const JSFunctionSpec *, js_fs)
-STATIC_ARRAY_MEMBER_DETECTOR(const JSPropertySpec *, js_static_ps)
-STATIC_MEMBER_POINTER_OR_NULL(const JSPropertySpec *, js_static_ps)
-STATIC_ARRAY_MEMBER_DETECTOR(const JSFunctionSpec *, js_static_fs)
-STATIC_MEMBER_POINTER_OR_NULL(const JSFunctionSpec *, js_static_fs)
+STATIC_ARRAY_POINTER_OR_NULL(js_ps)
+STATIC_ARRAY_POINTER_OR_NULL(js_fs)
+STATIC_ARRAY_POINTER_OR_NULL(js_static_ps)
+STATIC_ARRAY_POINTER_OR_NULL(js_static_fs)
 typedef std::pair<std::string, int> IntConstantSpec;
-STATIC_ARRAY_MEMBER_DETECTOR(const IntConstantSpec *, js_int_const)
-STATIC_MEMBER_POINTER_OR_NULL(const IntConstantSpec *, js_int_const)
+STATIC_ARRAY_POINTER_OR_NULL(js_int_const)
 
 class BaseClass
 {
@@ -95,12 +59,12 @@ public:
 		Log::debug () << "Initializing class " << T::js_class.name << std::endl;
 		_proto = JS_InitClass (cx, obj, parent_proto, &T::js_class,
 			constructor, nargs,
-			static_member_pointer_or_null_js_ps<T> (),
-			static_member_pointer_or_null_js_fs<T> (),
-			static_member_pointer_or_null_js_static_ps<T> (),
-			static_member_pointer_or_null_js_static_fs<T> ());
+			static_array_pointer_or_null_js_ps<const JSPropertySpec, T> (),
+			static_array_pointer_or_null_js_fs<const JSFunctionSpec, T> (),
+			static_array_pointer_or_null_js_static_ps<const JSPropertySpec, T> (),
+			static_array_pointer_or_null_js_static_fs<const JSFunctionSpec, T> ());
 		JS::RootedObject js_constructor (cx, JS_GetConstructor (cx, _proto));
-		const std::pair<std::string, int > *int_const = static_member_pointer_or_null_js_int_const<T> ();
+		const IntConstantSpec *int_const = static_array_pointer_or_null_js_int_const<const IntConstantSpec, T> ();
 		if (int_const) {
 			unsigned int i = 0;
 			while (!int_const[i].first.empty ()) {
