@@ -65,12 +65,14 @@ public:
 	static const JSFunctionSpec js_fs[];
 	typedef JsHelpers::AbstractClass<EventDevice> JsClass;
 
-	virtual JSObject *makeJsObject (JSContext *cx, JS::HandleObject obj);
+	virtual JSObject *makeJsObject (const JsHelpers::Thread *thread);
 
 private:
 	int _fd, _pipe[2];
 	bool _error;
 	struct libevdev *_dev;
+
+	static bool _registered;
 };
 
 #endif

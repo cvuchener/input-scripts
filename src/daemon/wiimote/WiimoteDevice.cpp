@@ -18,6 +18,8 @@
 
 #include "WiimoteDevice.h"
 
+#include "../ClassManager.h"
+
 extern "C" {
 #include <unistd.h>
 #include <fcntl.h>
@@ -374,10 +376,9 @@ const JSFunctionSpec WiimoteDevice::js_fs[] = {
 	JS_FS_END
 };
 
-JSObject *WiimoteDevice::makeJsObject (JSContext *cx, JS::HandleObject obj)
+JSObject *WiimoteDevice::makeJsObject (const JsHelpers::Thread *thread)
 {
-	InputDevice::JsClass input_class (cx, obj, JS::NullPtr ());
-	WiimoteDevice::JsClass wiimote_class (cx, obj, input_class.prototype ());
-	return wiimote_class.newObjectFromPointer (this);
+	return thread->makeJsObject (this);
 }
 
+bool WiimoteDevice::_registered = ClassManager::registerClass<WiimoteDevice::JsClass> ("InputDevice");

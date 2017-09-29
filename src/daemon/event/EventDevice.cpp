@@ -18,6 +18,8 @@
 
 #include "EventDevice.h"
 
+#include "../ClassManager.h"
+
 #include <iostream>
 
 extern "C" {
@@ -159,10 +161,9 @@ const JSFunctionSpec EventDevice::js_fs[] = {
 	JS_FS_END
 };
 
-JSObject *EventDevice::makeJsObject (JSContext *cx, JS::HandleObject obj)
+JSObject *EventDevice::makeJsObject (const JsHelpers::Thread *thread)
 {
-	InputDevice::JsClass input_class (cx, obj, JS::NullPtr ());
-	EventDevice::JsClass event_class (cx, obj, input_class.prototype ());
-	return event_class.newObjectFromPointer (this);
+	return thread->makeJsObject (this);
 }
 
+bool EventDevice::_registered = ClassManager::registerClass<EventDevice::JsClass> ("InputDevice");

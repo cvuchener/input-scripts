@@ -44,8 +44,16 @@ protected:
 private:
 	void readInputEvents (JSContext *, JS::HandleObject);
 
+	static bool connectSignalWrapper (JSContext *cx, unsigned int argc, JS::Value *vp);
+	bool connectSignal (JSContext *cx, unsigned int argc, JS::Value *vp);
+	static bool disconnectSignalWrapper (JSContext *cx, unsigned int argc, JS::Value *vp);
+	bool disconnectSignal (JSContext *cx, unsigned int argc, JS::Value *vp);
+
 	std::string _filename;
 	InputDevice *_device;
+
+	std::map<int, sigc::connection> _signal_connections;
+	int _next_signal_connection_index;
 };
 
 #endif

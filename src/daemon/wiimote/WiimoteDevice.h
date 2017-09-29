@@ -59,7 +59,7 @@ public:
 	static const std::pair<std::string, int> js_int_const[];
 	typedef JsHelpers::AbstractClass<WiimoteDevice> JsClass;
 
-	virtual JSObject *makeJsObject (JSContext *cx, JS::HandleObject obj);
+	virtual JSObject *makeJsObject (const JsHelpers::Thread *thread);
 
 private:
 	int _pipe[2];
@@ -68,6 +68,8 @@ private:
 	bool _tracking[XWII_ABS_NUM];
 	unsigned int _opened, _available;
 	std::string _name;
+
+	static bool _registered;
 };
 
 #endif

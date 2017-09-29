@@ -18,6 +18,8 @@
 
 #include "HIDPP10Device.h"
 
+#include "../ClassManager.h"
+
 #include <hidpp10/defs.h>
 #include <hidpp10/DeviceInfo.h>
 #include <hidpp10/IIndividualFeatures.h>
@@ -207,9 +209,9 @@ const std::pair<std::string, int> HIDPP10Device::js_int_const[] = {
 	{ "", 0 }
 };
 
-JSObject *HIDPP10Device::makeJsObject (JSContext *cx, JS::HandleObject obj)
+JSObject *HIDPP10Device::makeJsObject (const JsHelpers::Thread *thread)
 {
-	InputDevice::JsClass input_class (cx, obj, JS::NullPtr ());
-	HIDPP10Device::JsClass hidpp10_class (cx, obj, input_class.prototype ());
-	return hidpp10_class.newObjectFromPointer (this);
+	return thread->makeJsObject (this);
 }
+
+bool HIDPP10Device::_registered = ClassManager::registerClass<HIDPP10Device::JsClass> ("InputDevice");

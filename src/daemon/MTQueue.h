@@ -22,8 +22,7 @@
 #include <queue>
 #include <mutex>
 #include <condition_variable>
-#include <experimental/optional>
-namespace std { template<typename T> using optional = experimental::optional<T>; }
+#include <optional>
 
 /**
  * Interruptible queue for transfering data across different thread.

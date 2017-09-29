@@ -24,6 +24,8 @@
 #include <vector>
 #include <map>
 #include <stdexcept>
+#include <type_traits>
+#include "detector.h"
 #include "Thread.h"
 
 #include "../Log.h"
@@ -71,6 +73,20 @@ inline void setJSValue (JSContext *cx, JS::MutableHandleValue var, const std::ma
 		JS_DefineProperty (cx, obj, pair.first.c_str (), value, JSPROP_ENUMERATE);
 	}
 	var.setObject (*obj);
+}
+
+template <typename T>
+using is_js_class_t = decltype (T::js_class);
+
+template <typename T>
+inline typename std::enable_if<is_detected_exact_v<JSClass, is_js_class_t, T>>
+setJSValue (JSContext *cx, JS::MutableHandleValue var, T *object)
+{
+	Thread *thread = static_cast<Thread *> (JS_GetContextPrivate (cx));
+	auto p = thread->getClass (T::js_class.name);
+	if (!p)
+		throw std::runtime_error ("Class not found");
+	var.setObject (p->newObjectFromPointer (object));
 }
 
 // Converting JS::Value to C++ types
@@ -181,7 +197,7 @@ struct ArgumentVector<n>
 template <typename R, typename... Args>
 inline void readJSValue (JSContext *cx, std::function<R (Args...)> &var, JS::HandleValue value)
 {
-	std::shared_ptr<JS::PersistentRootedValue> fun (new JS::PersistentRootedValue (cx, value));
+	auto fun = std::make_shared<JS::PersistentRootedValue> (cx, value);
 	Thread *thread = static_cast<Thread *> (JS_GetContextPrivate (cx));
 	var = std::function<R (Args...)> ([cx, thread, fun] (Args... args) {
 		return thread->execOnJsThreadSync<R> ([cx, fun, args...] () {
@@ -200,7 +216,7 @@ inline void readJSValue (JSContext *cx, std::function<R (Args...)> &var, JS::Han
 template <typename... Args>
 inline void readJSValue (JSContext *cx, std::function<void (Args...)> &var, JS::HandleValue value)
 {
-	std::shared_ptr<JS::PersistentRootedValue> fun (new JS::PersistentRootedValue (cx, value));
+	auto fun = std::make_shared<JS::PersistentRootedValue> (cx, value);
 	Thread *thread = static_cast<Thread *> (JS_GetContextPrivate (cx));
 	var = std::function<void (Args...)> ([cx, thread, fun] (Args... args) {
 		thread->execOnJsThreadSync<int> ([cx, fun, args...] () {
@@ -214,6 +230,28 @@ inline void readJSValue (JSContext *cx, std::function<void (Args...)> &var, JS::
 	});
 }
 
+}
+
+#include "../ClassManager.h"
+
+namespace JsHelpers
+{
+template <typename T>
+inline typename std::enable_if<is_detected_exact_v<JSClass, is_js_class_t, T>>
+readJSValue (JSContext *cx, T *&var, JS::HandleValue value)
+{
+	if (!value.isObject ()) {
+		throw std::invalid_argument ("must be an object");
+	}
+	JS::RootedObject obj (cx, value.toObjectOrNull ());
+	const JSClass *cls = JS_GetClass (obj);
+	if (!ClassManager::inherits (cls->name, T::js_class.name)) {
+		Log::debug () << cls->name << " is not convertible to " << T::js_class.name << std::endl;
+		throw std::runtime_error ("object type mismatch");
+	}
+	auto data = static_cast<std::pair<bool, T *> *> (JS_GetPrivate (obj));
+	var = data->second;
+}
 }
 
 #endif

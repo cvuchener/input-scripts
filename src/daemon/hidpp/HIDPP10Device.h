@@ -60,7 +60,7 @@ public:
 	static const std::pair<std::string, int> js_int_const[];
 	typedef JsHelpers::AbstractClass<HIDPP10Device> JsClass;
 
-	virtual JSObject *makeJsObject (JSContext *cx, JS::HandleObject obj);
+	virtual JSObject *makeJsObject (const JsHelpers::Thread *thread);
 
 private:
 	bool eventHandler (const HIDPP::Report &report);
@@ -70,6 +70,8 @@ private:
 
 	std::vector<HIDPP::Dispatcher::listener_iterator> _listener_iterators;
 	MTQueue<HIDPP::Report> _report_queue;
+
+	static bool _registered;
 };
 
 #endif

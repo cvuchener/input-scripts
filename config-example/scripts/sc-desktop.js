@@ -69,6 +69,7 @@ function init () {
 	this.scroll_wheel = Object.create (ScrollWheel);
 	this.scroll_wheel.init (this.scrollWheelEvent.bind (this));
 
+	connect (input, 'event', this.event.bind (this));
 }
 
 function finalize () {

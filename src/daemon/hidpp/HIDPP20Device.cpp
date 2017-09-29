@@ -18,6 +18,8 @@
 
 #include "HIDPP20Device.h"
 
+#include "../ClassManager.h"
+
 #include <hidpp20/IFeatureSet.h>
 #include <hidpp20/IMouseButtonSpy.h>
 #include <hidpp20/IOnboardProfiles.h>
@@ -520,9 +522,9 @@ const std::pair<std::string, int> HIDPP20Device::js_int_const[] = {
 	{ "", 0 }
 };
 
-JSObject *HIDPP20Device::makeJsObject (JSContext *cx, JS::HandleObject obj)
+JSObject *HIDPP20Device::makeJsObject (const JsHelpers::Thread *thread)
 {
-	InputDevice::JsClass input_class (cx, obj, JS::NullPtr ());
-	HIDPP20Device::JsClass hidpp20_class (cx, obj, input_class.prototype ());
-	return hidpp20_class.newObjectFromPointer (this);
+	return thread->makeJsObject (this);
 }
+
+bool HIDPP20Device::_registered = ClassManager::registerClass<HIDPP20Device::JsClass> ("InputDevice");

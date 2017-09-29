@@ -18,6 +18,9 @@
 
 #include "InputDevice.h"
 
+#include "ClassManager.h"
+#include "JsHelpers/Signal.h"
+
 extern "C" {
 #include <linux/input.h>
 }
@@ -42,6 +45,11 @@ int32_t InputDevice::getAxisValue (uint16_t code)
 	})["value"];
 }
 
+void InputDevice::eventRead (const Event &e)
+{
+	event.emit (e);
+}
+
 const JSClass InputDevice::js_class = JS_HELPERS_CLASS("InputDevice", InputDevice);
 
 const JSFunctionSpec InputDevice::js_fs[] = {
@@ -50,3 +58,9 @@ const JSFunctionSpec InputDevice::js_fs[] = {
 	JS_HELPERS_METHOD("getAxisValue", InputDevice::getAxisValue),
 	JS_FS_END
 };
+
+const JsHelpers::SignalMap InputDevice::js_signals = {
+	{ "event", JsHelpers::make_signal_connector (&InputDevice::event) },
+};
+
+bool InputDevice::_registered = ClassManager::registerClass<InputDevice::JsClass> ();

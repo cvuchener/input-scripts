@@ -23,10 +23,14 @@
 #include <functional>
 #include <thread>
 #include <future>
+#include <map>
 #include "../MTQueue.h"
+#include "../Log.h"
 
 namespace JsHelpers
 {
+
+class BaseClass;
 
 class Thread
 {
@@ -54,6 +58,21 @@ public:
 	static void init ();
 	static void shutdown ();
 
+	const BaseClass *getClass (const std::string &name) const;
+
+	template<typename T>
+	JSObject *makeJsObject (T *ptr) const
+	{
+		auto cls = getClass (T::js_class.name);
+		if (!cls) {
+			Log::error () << T::js_class.name << " class not found" << std::endl;
+			return nullptr;
+		}
+		return cls->newObjectFromPointer (ptr);
+	}
+
+	void addClasses (std::map<std::string, std::unique_ptr<BaseClass>> &&classes);
+
 protected:
 	void exec ();
 	virtual void run (JSContext *cx) = 0;
@@ -66,6 +85,7 @@ private:
 	JSContext *_cx;
 	MTQueue<std::function<void (void)>> _task_queue;
 	std::thread _thread;
+	std::map<std::string, std::unique_ptr<BaseClass>> _classes;
 
 	static constexpr uint32_t RuntimeMaxBytes = 8ul*1024ul*1024ul;
 	static JSRuntime *_main_rt;

@@ -82,6 +82,8 @@ function init () {
 			event: this.touchButton.bind (this, SC.HapticLeft, EV_ABS, ABS_HAT0X, -1)},
 		{ type: "polar", min_r: "8192", min_angle: -150, max_angle: -30,
 			event: this.touchButton.bind (this, SC.HapticLeft, EV_ABS, ABS_HAT0Y, 1)}]);
+
+	connect (input, 'event', this.event.bind (this));
 }
 
 function finalize () {

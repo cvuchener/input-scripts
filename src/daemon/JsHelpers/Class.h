@@ -21,28 +21,44 @@
 
 #include "Functions.h"
 
+#include <sigc++/signal.h>
 #include <cassert>
-#include <experimental/type_traits>
+#include "detector.h"
 
-#define STATIC_ARRAY_POINTER_OR_NULL(name) \
+#define STATIC_ARRAY_POINTER_OR_NULL(expected, name) \
 template<typename T> \
-using has_##name##_member_t = typename std::remove_extent<decltype (T::name)>::type; \
-template<typename T, typename Class> \
-std::enable_if_t<std::is_same<T, std::experimental::detected_t<has_##name##_member_t, Class>>::value, T *> \
-static_array_pointer_or_null_##name () { return Class::name; }; \
-template<typename T, typename Class> \
-std::enable_if_t<!std::is_same<T, std::experimental::detected_t<has_##name##_member_t, Class>>::value, T *> \
+using has_##name##_array_t = std::enable_if_t<std::is_array_v<decltype (T::name)>, std::remove_extent_t<decltype (T::name)>>; \
+template<typename T> \
+std::enable_if_t<is_detected_exact_v<expected, has_##name##_array_t, T>, expected *> \
+static_array_pointer_or_null_##name () { return T::name; }; \
+template<typename T> \
+std::enable_if_t<!is_detected_exact_v<expected, has_##name##_array_t, T>, expected *> \
 static_array_pointer_or_null_##name () { return nullptr; };
+
+#define STATIC_MEMBER_POINTER_OR_NULL(expected, name) \
+template<typename T> \
+using has_##name##_member_t = decltype (T::name); \
+template<typename T> \
+std::enable_if_t<is_detected_exact_v<expected, has_##name##_member_t, T>, expected *> \
+static_member_pointer_or_null_##name () { return &T::name; }; \
+template<typename T> \
+std::enable_if_t<!is_detected_exact_v<expected, has_##name##_member_t, T>, expected *> \
+static_member_pointer_or_null_##name () { return nullptr; };
 
 namespace JsHelpers
 {
 
-STATIC_ARRAY_POINTER_OR_NULL(js_ps)
-STATIC_ARRAY_POINTER_OR_NULL(js_fs)
-STATIC_ARRAY_POINTER_OR_NULL(js_static_ps)
-STATIC_ARRAY_POINTER_OR_NULL(js_static_fs)
-typedef std::pair<std::string, int> IntConstantSpec;
-STATIC_ARRAY_POINTER_OR_NULL(js_int_const)
+using IntConstantSpec = std::pair<std::string, int>;
+using SignalConnector = std::function<sigc::connection (JSContext *, JS::HandleValue obj, JS::HandleValue)>;
+using SignalMap = std::map<std::string, SignalConnector>;
+
+STATIC_ARRAY_POINTER_OR_NULL(const JSPropertySpec, js_ps)
+STATIC_ARRAY_POINTER_OR_NULL(const JSFunctionSpec, js_fs)
+STATIC_ARRAY_POINTER_OR_NULL(const JSPropertySpec, js_static_ps)
+STATIC_ARRAY_POINTER_OR_NULL(const JSFunctionSpec, js_static_fs)
+STATIC_ARRAY_POINTER_OR_NULL(const IntConstantSpec, js_int_const)
+
+STATIC_MEMBER_POINTER_OR_NULL(const SignalMap, js_signals)
 
 class BaseClass
 {
@@ -51,20 +67,23 @@ public:
 	class Type { };
 
 	template<typename T>
-	BaseClass (Type<T> &&, JSContext *cx, JS::HandleObject obj, JS::HandleObject parent_proto, JSNative constructor, unsigned int nargs):
+	BaseClass (Type<T> &&, JSContext *cx, JS::HandleObject obj, const BaseClass *parent, JSNative constructor, unsigned int nargs):
 		_cx (cx),
 		_class (&T::js_class),
-		_proto (cx)
+		_parent (parent),
+		_proto (cx),
+		_signals (static_member_pointer_or_null_js_signals<T> ())
 	{
 		Log::debug () << "Initializing class " << T::js_class.name << std::endl;
+		JS::RootedObject parent_proto (cx, parent ? parent->prototype () : JS::NullPtr ());
 		_proto = JS_InitClass (cx, obj, parent_proto, &T::js_class,
 			constructor, nargs,
-			static_array_pointer_or_null_js_ps<const JSPropertySpec, T> (),
-			static_array_pointer_or_null_js_fs<const JSFunctionSpec, T> (),
-			static_array_pointer_or_null_js_static_ps<const JSPropertySpec, T> (),
-			static_array_pointer_or_null_js_static_fs<const JSFunctionSpec, T> ());
+			static_array_pointer_or_null_js_ps<T> (),
+			static_array_pointer_or_null_js_fs<T> (),
+			static_array_pointer_or_null_js_static_ps<T> (),
+			static_array_pointer_or_null_js_static_fs<T> ());
 		JS::RootedObject js_constructor (cx, JS_GetConstructor (cx, _proto));
-		const IntConstantSpec *int_const = static_array_pointer_or_null_js_int_const<const IntConstantSpec, T> ();
+		auto int_const = static_array_pointer_or_null_js_int_const<T> ();
 		if (int_const) {
 			unsigned int i = 0;
 			while (!int_const[i].first.empty ()) {
@@ -93,18 +112,40 @@ public:
 		return _proto;
 	}
 
+	const char *name () const
+	{
+		return _class->name;
+	}
+
+	sigc::connection connect (JS::HandleValue obj, const std::string &signal_name, JS::HandleValue callback) const
+	{
+		if (_signals) {
+			auto it = _signals->find (signal_name);
+			if (it != _signals->end ())
+				return it->second (_cx, obj, callback);
+		}
+		if (_parent)
+			return _parent->connect (obj, signal_name, callback);
+		else
+			throw std::invalid_argument ("Unknown signal name");
+	}
+
 private:
 	JSContext *_cx;
 	const JSClass *_class;
+	const BaseClass *_parent;
 	JS::RootedObject _proto;
+	const std::map<std::string, SignalConnector> *_signals;
 };
 
 template<typename T>
 class AbstractClass: public BaseClass
 {
 public:
-	AbstractClass (JSContext *cx, JS::HandleObject obj, JS::HandleObject parent_proto):
-		BaseClass (BaseClass::Type<T> (), cx, obj, parent_proto, &constructor, 0)
+	typedef T type;
+
+	AbstractClass (JSContext *cx, JS::HandleObject obj, const BaseClass *parent):
+		BaseClass (BaseClass::Type<T> (), cx, obj, parent, &constructor, 0)
 	{
 	}
 
@@ -119,8 +160,10 @@ template<typename T, typename... ConstructorArgs>
 class Class: public BaseClass
 {
 public:
-	Class (JSContext *cx, JS::HandleObject obj, JS::HandleObject parent_proto):
-		BaseClass (BaseClass::Type<T> (), cx, obj, parent_proto,
+	typedef T type;
+
+	Class (JSContext *cx, JS::HandleObject obj, const BaseClass *parent):
+		BaseClass (BaseClass::Type<T> (), cx, obj, parent,
 			&constructorWrapper<&T::js_class, T, ConstructorArgs...>,
 			sizeof... (ConstructorArgs))
 	{

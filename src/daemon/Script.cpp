@@ -89,15 +89,6 @@ static const JSClass global_class = {
 
 void Script::readInputEvents (JSContext *cx, JS::HandleObject script_object)
 {
-	_device->eventRead = [this, cx, script_object] (InputDevice::Event event) {
-		execOnJsThreadAsync ([cx, script_object, event] () {
-			JS::AutoValueArray<1> args (cx);
-			JsHelpers::setJSValue (cx, args[0], event);
-			JS::RootedValue rval (cx);
-			JS_CallFunctionName (cx, script_object, "event", args, &rval);
-		});
-	};
-
 	while (!_stopping && *_device) {
 		_device->readEvents ();
 	}
@@ -154,6 +145,82 @@ static bool importJSScript (JSContext *cx, unsigned int argc, JS::Value *vp)
 	return true;
 }
 
+bool Script::connectSignalWrapper (JSContext *cx, unsigned int argc, JS::Value *vp)
+{
+	Script *script = static_cast<Script *> (JS_GetContextPrivate (cx));
+	return script->connectSignal (cx, argc, vp);
+}
+
+bool Script::connectSignal (JSContext *cx, unsigned int argc, JS::Value *vp)
+{
+	JS::CallArgs jsargs = JS::CallArgsFromVp (argc, vp);
+
+	auto ptr = jsargs.get (0).toObjectOrNull ();
+	if (!ptr) {
+		JS_ReportError (cx, "Argument 0 must be a valid object");
+		return false;
+	}
+	JS::RootedObject obj (cx, ptr);
+	const JSClass *cls = JS_GetClass (obj);
+	auto p = getClass (cls->name);
+	if (!p) {
+		JS_ReportError (cx, "Unknown class: %s", cls->name);
+		return false;
+	}
+
+	std::string signal_name;
+	try {
+		JsHelpers::readJSValue (cx, signal_name, jsargs.get (1));
+	}
+	catch (std::exception &e) {
+		JS_ReportError (cx, "Invalid argument 1: %s", e.what ());
+		return false;
+	}
+
+	try {
+		auto c = p->connect (jsargs.get (0), signal_name, jsargs.get (2));
+		auto it = _signal_connections.lower_bound (_next_signal_connection_index);
+		while (it != _signal_connections.end () &&
+		       it->first == _next_signal_connection_index)
+			++it, ++_next_signal_connection_index;
+		_signal_connections.emplace_hint (it, _next_signal_connection_index, c);
+		JsHelpers::setJSValue (cx, jsargs.rval (), _next_signal_connection_index);
+		++_next_signal_connection_index;
+	}
+	catch (std::exception &e) {
+		JS_ReportError (cx, "Failed to connect signal: %s", e.what ());
+		return false;
+	}
+}
+
+bool Script::disconnectSignalWrapper (JSContext *cx, unsigned int argc, JS::Value *vp)
+{
+	Script *script = static_cast<Script *> (JS_GetContextPrivate (cx));
+	return script->disconnectSignal (cx, argc, vp);
+}
+
+bool Script::disconnectSignal (JSContext *cx, unsigned int argc, JS::Value *vp)
+{
+	JS::CallArgs jsargs = JS::CallArgsFromVp (argc, vp);
+
+	try {
+		int index;
+		JsHelpers::readJSValue (cx, index, jsargs.get (0));
+		auto it = _signal_connections.find (index);
+		if (it == _signal_connections.end ()) {
+			JS_ReportError (cx, "Signal index not found");
+			return false;
+		}
+		it->second.disconnect ();
+		_signal_connections.erase (it);
+		return true;
+	}
+	catch (std::exception &e) {
+		JS_ReportError (cx, "Could not disconnect signal: %s", e.what ());
+		return false;
+	}
+}
+
 void Script::run (JSContext *cx)
 {
 	JSAutoRequest ar (cx);
@@ -175,13 +242,16 @@ void Script::run (JSContext *cx)
 
 	// import function
 	JS_DefineFunction (cx, global, "importScript", importJSScript, 1, JSPROP_READONLY | JSPROP_PERMANENT);
+	// signal functions
+	JS_DefineFunction (cx, global, "connect", connectSignalWrapper, 3, JSPROP_READONLY | JSPROP_PERMANENT);
+	JS_DefineFunction (cx, global, "disconnect", disconnectSignalWrapper, 3, JSPROP_READONLY | JSPROP_PERMANENT);
 
 	// C++ classes
-	auto cppclasses = ClassManager::initClasses (cx, global);
+	addClasses (ClassManager::initClasses (cx, global));
 
 	// System object
 	System system (this);
-	System::JsClass system_class (cx, global, JS::NullPtr ());
+	System::JsClass system_class (cx, global, nullptr);
 	JS::RootedObject system_object (cx);
 	system_object = system_class.newObjectFromPointer (&system);
 	JS_DefineProperty (cx, global, "system", system_object, JSPROP_ENUMERATE);
@@ -208,7 +278,7 @@ void Script::run (JSContext *cx)
 
 	// Create InputEvent JS object
 	JS::RootedObject input_object (cx);
-	input_object = _device->makeJsObject (cx, global);
+	input_object = _device->makeJsObject (this);
 	JS_DefineProperty (cx, global, "input", input_object, JSPROP_ENUMERATE);
 
 	// Execute user script and retrieve the prototype
@@ -241,6 +311,11 @@ void Script::run (JSContext *cx)
 	// Stop inputs
 	_device->interrupt ();
 	input_thread.join ();
+
+	// disconnect all remaining signals
+	for (auto &p: _signal_connections)
+		p.second.disconnect ();
+	_signal_connections.clear ();
 
 	// Call finalize function
 	if (!JS_CallFunctionName (cx, script_object, "finalize", args, &rval))

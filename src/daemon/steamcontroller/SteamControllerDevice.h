@@ -292,11 +292,12 @@ public:
 	static constexpr int SensorFuzz = 16;
 
 	static const JSClass js_class;
+	static const char *js_name;
 	static const JSFunctionSpec js_fs[];
 	static const std::pair<std::string, int> js_int_const[];
 	typedef JsHelpers::AbstractClass<SteamControllerDevice> JsClass;
 
-	virtual JSObject *makeJsObject (JSContext *cx, JS::HandleObject obj);
+	virtual JSObject *makeJsObject (const JsHelpers::Thread *thread);
 
 private:
 	SteamControllerReceiver *_receiver;
@@ -311,6 +312,8 @@ private:
 		int16_t quaternion[4];
 	} _state;
 	std::string _serial;
+
+	static bool _registered;
 };
 
 #endif

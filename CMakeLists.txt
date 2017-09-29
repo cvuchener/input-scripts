@@ -7,7 +7,7 @@ option(WITH_HIDPP "Use HID++ driver" OFF)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Threads REQUIRED)
@@ -17,6 +17,7 @@ pkg_check_modules(MOZJS REQUIRED mozjs-38)
 pkg_check_modules(LIBUDEV REQUIRED libudev)
 pkg_check_modules(DBUSCPP REQUIRED dbus-c++-1)
 pkg_check_modules(JSONCPP REQUIRED jsoncpp)
+pkg_check_modules(SIGCPP REQUIRED sigc++-3.0)
 if(WITH_WIIMOTE)
 	pkg_check_modules(XWIIMOTE REQUIRED libxwiimote)
 endif()
@@ -25,6 +26,7 @@ if(WITH_HIDPP)
 endif()
 
 link_directories(
+	${SIGCPP_LIBRARY_DIRS}
 	${LIBEVDEV_LIBRARY_DIRS}
 	${MOZJS_LIBRARY_DIRS}
 	${LIBUDEV_LIBRARY_DIRS}

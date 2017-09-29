@@ -19,32 +19,70 @@
 #ifndef CLASS_MANAGER_H
 #define CLASS_MANAGER_H
 
+#include <jsapi.h>
 #include <map>
+#include <vector>
 #include <string>
 #include <memory>
-#include "JsHelpers/Class.h"
+#include <functional>
+
+namespace JsHelpers { class BaseClass; }
 
 class ClassManager
 {
 public:
 	template<typename Class>
-	static bool registerClass (const std::string &name)
-	{
-		return _classes.emplace (name, &classFactory<Class>).second;
-	}
+	static bool registerClass (const std::string &parent = std::string ());
 
 	static std::map<std::string, std::unique_ptr<JsHelpers::BaseClass>> initClasses (JSContext *cx, JS::HandleObject obj);
 
+	static bool inherits (const std::string &cls, const std::string &parent);
+
 private:
-	typedef std::unique_ptr<JsHelpers::BaseClass> Factory (JSContext *, JS::HandleObject, JS::HandleObject);
+	typedef std::unique_ptr<JsHelpers::BaseClass> Factory (JSContext *, JS::HandleObject, const JsHelpers::BaseClass *);
 
 	template<typename Class>
-	static std::unique_ptr<JsHelpers::BaseClass> classFactory (JSContext *cx, JS::HandleObject obj, JS::HandleObject parent_proto)
-	{
-		return std::make_unique<Class> (cx, obj, parent_proto);
-	}
+	static std::unique_ptr<JsHelpers::BaseClass> classFactory (JSContext *cx, JS::HandleObject obj, const JsHelpers::BaseClass *parent);
 
-	static std::map<std::string, std::function<Factory>> _classes;
+	struct ClassData {
+		std::string parent_name;
+		std::function<Factory> factory;
+
+		using Node = std::pair<const std::string, ClassData>;
+		Node *parent;
+		Node *root;
+		std::vector<Node *> children;
+
+		template <typename F>
+		ClassData (const std::string &parent, F factory):
+			parent_name (parent),
+			factory (factory),
+			parent (nullptr)
+		{
+		}
+	};
+
+	static void buildInheritanceTrees ();
+
+	static std::map<std::string, ClassData> _classes;
+	static std::vector<ClassData::Node *> _inheritance_trees;
 };
+
+#include "JsHelpers/Class.h"
+
+template<typename Class>
+bool ClassManager::registerClass (const std::string &parent)
+{
+	return _classes.emplace (std::piecewise_construct,
+				 std::forward_as_tuple (Class::type::js_class.name),
+				 std::forward_as_tuple (parent, &classFactory<Class>)
+				).second;
+}
+
+template<typename Class>
+std::unique_ptr<JsHelpers::BaseClass> ClassManager::classFactory (JSContext *cx, JS::HandleObject obj, const JsHelpers::BaseClass *parent)
+{
+	return std::make_unique<Class> (cx, obj, parent);
+}
 
 #endif

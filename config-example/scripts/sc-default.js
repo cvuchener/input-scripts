@@ -7,6 +7,3 @@ function init () {
 
 function finalize () {
 }
-
-function event (ev) {
-}

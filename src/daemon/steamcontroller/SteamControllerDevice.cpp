@@ -23,6 +23,7 @@
 #include "SteamControllerProtocol.h"
 using namespace SteamController;
 
+#include "../ClassManager.h"
 #include "../Log.h"
 
 extern "C" {
@@ -489,10 +490,9 @@ const std::pair<std::string, int> SteamControllerDevice::js_int_const[] = {
 	{ "", 0 }
 };
 
-JSObject *SteamControllerDevice::makeJsObject (JSContext *cx, JS::HandleObject obj)
+JSObject *SteamControllerDevice::makeJsObject (const JsHelpers::Thread *thread)
 {
-	InputDevice::JsClass input_class (cx, obj, JS::NullPtr ());
-	SteamControllerDevice::JsClass sc_class (cx, obj, input_class.prototype ());
-	return sc_class.newObjectFromPointer (this);
+	return thread->makeJsObject (this);
 }
 
+bool SteamControllerDevice::_registered = ClassManager::registerClass<SteamControllerDevice::JsClass> ("InputDevice");

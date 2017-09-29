@@ -394,4 +394,4 @@ const JSPropertySpec UInput::js_ps[] = {
 	JS_PS_END
 };
 
-bool UInput::_registered = ClassManager::registerClass<UInput::JsClass> ("UInput");
+bool UInput::_registered = ClassManager::registerClass<UInput::JsClass> ();

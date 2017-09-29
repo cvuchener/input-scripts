@@ -35,6 +35,7 @@ endif()
 add_executable(input-scripts ${INPUT_SCRIPTS_SOURCES})
 
 _concat_flags(INPUT_SCRIPTS_CFLAGS
+	${SIGCPP_CFLAGS}
 	${LIBEVDEV_CFLAGS}
 	${MOZJS_CFLAGS}
 	${LIBUDEV_CFLAGS}
@@ -52,6 +53,7 @@ target_include_directories(input-scripts PUBLIC
 )
 
 target_link_libraries(input-scripts
+	${SIGCPP_LIBRARIES}
 	${LIBEVDEV_LIBRARIES}
 	${MOZJS_LIBRARIES}
 	${LIBUDEV_LIBRARIES}

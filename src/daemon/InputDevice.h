@@ -99,12 +99,13 @@ public:
 	virtual operator bool () const = 0;
 
 	/**
-	 * Callback for reading events read in readEvents.
+	 * Signal for input events.
 	 */
-	std::function<void (Event)> eventRead;
+	sigc::signal<void (Event)> event;
 
 	static const JSClass js_class;
 	static const JSFunctionSpec js_fs[];
+	static const JsHelpers::SignalMap js_signals;
 	typedef JsHelpers::AbstractClass<InputDevice> JsClass;
 
 	/**
@@ -113,7 +114,13 @@ public:
 	 * \param cx JS context
 	 * \param obj Global object where the class is created.
 	 */
-	virtual JSObject *makeJsObject (JSContext *cx, JS::HandleObject obj) = 0;
+	virtual JSObject *makeJsObject (const JsHelpers::Thread *) = 0;
+
+protected:
+	void eventRead (const Event &);
+
+private:
+	static bool _registered;
 };
 
 #endif

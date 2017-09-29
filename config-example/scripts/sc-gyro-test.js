@@ -16,6 +16,8 @@ function init () {
 	input.disableKeys ();
 	input.setSetting (SC.SettingTrackBall, SC.TrackBallOff);
 	input.setSetting (SC.SettingOrientationSensors, SC.OrientationQuaternion);
+
+	connect (input, 'event', this.event.bind (this));
 }
 
 function mouseMove (axis, d) {

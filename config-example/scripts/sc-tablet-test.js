@@ -11,6 +11,8 @@ function init () {
 		[1440, 0, 3360, 1080], // Region is the right monitor (1920x1080+1440+0)
 		[-20000, -20000, 20000, 20000] // The touchpad is a disk, using the whole range would make it impossible to get in the corners
 	);
+
+	connect (input, 'event', this.event.bind (this));
 }
 
 function finalize () {

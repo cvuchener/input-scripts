@@ -83,6 +83,7 @@ function init () {
 		{ type: EV_ABS, code: SC.AbsRightTrigger, new_code: ABS_BRAKE },
 	]);
 
+	connect (input, 'event', this.event.bind (this));
 }
 
 function finalize () {

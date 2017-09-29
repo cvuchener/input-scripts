@@ -430,4 +430,4 @@ const std::pair<std::string, int> DBusProxy::js_int_const[] = {
 	{ "", 0 }
 };
 
-bool DBusProxy::_registered = ClassManager::registerClass<DBusProxy::JsClass> ("DBusProxy");
+bool DBusProxy::_registered = ClassManager::registerClass<DBusProxy::JsClass> ();

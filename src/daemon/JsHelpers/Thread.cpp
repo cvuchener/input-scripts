@@ -18,9 +18,10 @@
 
 #include "Thread.h"
 
+#include "Class.h"
 #include "../Log.h"
 
-using JsHelpers::Thread;
+using namespace JsHelpers;
 
 Thread::~Thread ()
 {
@@ -50,6 +51,21 @@ JSContext *Thread::getContext ()
 void Thread::execOnJsThreadAsync (std::function<void (void)> f)
 {
 	_task_queue.push (f);
+}
+
+const BaseClass *Thread::getClass (const std::string &name) const
+{
+	auto it = _classes.find (name);
+	if (it != _classes.end ())
+		return it->second.get ();
+	else
+		return nullptr;
+}
+
+void Thread::addClasses (std::map<std::string, std::unique_ptr<BaseClass>> &&classes)
+{
+	for (auto &p: classes)
+		_classes.emplace (p.first, std::move (p.second));
 }
 
 void Thread::exec ()
@@ -90,6 +106,7 @@ void Thread::run ()
 		Log::error () << "Script failed: " << e.what () << std::endl;
 	}
 
+	_classes.clear ();
 	JS_DestroyContext (cx);
 	JS_DestroyRuntime (rt);
 }
