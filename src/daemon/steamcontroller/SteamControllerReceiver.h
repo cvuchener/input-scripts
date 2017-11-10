@@ -19,11 +19,11 @@
 #ifndef STEAM_CONTROLLER_RECEIVER_H
 #define STEAM_CONTROLLER_RECEIVER_H
 
-#include <functional>
 #include <array>
 #include <vector>
 #include <mutex>
 #include <cstdint>
+#include <sigc++/signal.h>
 
 class SteamControllerDevice;
 
@@ -45,9 +45,9 @@ public:
 
 	void sendRequest (uint8_t id, const std::vector<uint8_t> &params, std::vector<uint8_t> *result = nullptr);
 
-	std::function<void (void)> connected;
-	std::function<void (void)> disconnected;
-	std::function<void (const std::array<uint8_t, 64> &)> inputReport;
+	sigc::signal<void (void)> connected;
+	sigc::signal<void (void)> disconnected;
+	sigc::signal<void (const std::array<uint8_t, 64> &)> inputReport;
 
 private:
 	void parseReport (const std::array<uint8_t, 64> &report);

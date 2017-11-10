@@ -33,16 +33,14 @@ public:
 	WiimoteDevice (const std::string &path);
 	virtual ~WiimoteDevice ();
 
-	virtual void interrupt ();
-	virtual void readEvents ();
+	void start () override;
+	void stop () override;
 
-	virtual InputDevice::Event getEvent (InputDevice::Event event);
+	InputDevice::Event getEvent (InputDevice::Event event);
 
-	virtual std::string driver () const;
-	virtual std::string name () const;
-	virtual std::string serial () const;
-
-	virtual operator bool () const;
+	std::string driver () const override;
+	std::string name () const override;
+	std::string serial () const override;
 
 	void open (unsigned ifaces);
 	void close (unsigned ifaces);
@@ -59,11 +57,13 @@ public:
 	static const std::pair<std::string, int> js_int_const[];
 	typedef JsHelpers::AbstractClass<WiimoteDevice> JsClass;
 
-	virtual JSObject *makeJsObject (const JsHelpers::Thread *thread);
+	JSObject *makeJsObject (const JsHelpers::Thread *thread) override;
 
 private:
+	void readEvents ();
+
 	int _pipe[2];
-	bool _error;
+	std::thread _thread;
 	struct xwii_iface *_dev;
 	bool _tracking[XWII_ABS_NUM];
 	unsigned int _opened, _available;

@@ -42,8 +42,6 @@ protected:
 	virtual void on_set_property (DBus::InterfaceAdaptor &interface, const std::string &property, const DBus::Variant &value);
 
 private:
-	void readInputEvents (JSContext *, JS::HandleObject);
-
 	static bool connectSignalWrapper (JSContext *cx, unsigned int argc, JS::Value *vp);
 	bool connectSignal (JSContext *cx, unsigned int argc, JS::Value *vp);
 	static bool disconnectSignalWrapper (JSContext *cx, unsigned int argc, JS::Value *vp);

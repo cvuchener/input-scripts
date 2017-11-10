@@ -36,25 +36,29 @@ SteamControllerDevice::SteamControllerDevice (SteamControllerReceiver *receiver)
 	_report_single_axis (true),
 	_report_linked_axes (false)
 {
-	receiver->inputReport = [this] (const std::array<uint8_t, 64> &report) {
-		_report_queue.push (report);
-	};
 	_serial = querySerial ();
 }
 
 SteamControllerDevice::~SteamControllerDevice ()
 {
-	_receiver->inputReport = std::function<void (const std::array<uint8_t, 64> &)> ();
+	_input_report_conn.disconnect ();
 }
 
-void SteamControllerDevice::interrupt ()
+void SteamControllerDevice::start ()
 {
-	_report_queue.interrupt ();
+	assert (!_input_report_conn);
+	_input_report_conn = _receiver->inputReport.connect ([this] (auto &report) { readEvent (report); });
+}
+
+void SteamControllerDevice::stop ()
+{
+	assert (_input_report_conn);
+	_input_report_conn.disconnect ();
 }
 
 template <typename T, unsigned int size = sizeof (T)>
 static typename std::enable_if<std::is_integral<T>::value, T>::type
-readLE (uint8_t *buffer) {
+readLE (const uint8_t *buffer) {
 	T value = 0;
 	for (unsigned int i = 0; i < size; ++i) {
 		value |= buffer[i] << (8*i);
@@ -70,163 +74,158 @@ writeLE (uint8_t *buffer, T value) {
 	}
 }
 
-void SteamControllerDevice::readEvents ()
+void SteamControllerDevice::readEvent (const std::array<uint8_t, 64> &report)
 {
-	_report_queue.resetInterruption ();
-	while (auto opt = _report_queue.pop ()) {
-		std::array<uint8_t, 64> &report = opt.value ();
+	//uint8_t type = report[2];
+	//uint8_t length = report[3];
+	//uint32_t seq = readLE<uint32_t> (&report[4]);
+	uint32_t buttons = readLE<uint32_t, 3> (&report[8]);
+	uint8_t triggers[2] = { report[11], report[12] };
+	int16_t touchpad[2][2] = {
+		{ // Left touchpad/stick
+			readLE<int16_t> (&report[16]),
+			readLE<int16_t> (&report[18])
+		},
+		{ // Right touchpad
+			readLE<int16_t> (&report[20]),
+			readLE<int16_t> (&report[22])
+		}
+	};
+	// 16 bits triggers are not available on wireless devices
+	//int16_t triggers_16[2] = {
+	//	readLE<int16_t> (&report[24]),
+	//	readLE<int16_t> (&report[26])
+	//};
+	int16_t accel[3] = {
+		readLE<int16_t> (&report[28]),
+		readLE<int16_t> (&report[30]),
+		readLE<int16_t> (&report[32])
+	};
+	int16_t gyro[3] = {
+		readLE<int16_t> (&report[34]),
+		readLE<int16_t> (&report[36]),
+		readLE<int16_t> (&report[38])
+	};
+	int16_t quaternion[4] = {
+		readLE<int16_t> (&report[40]),
+		readLE<int16_t> (&report[42]),
+		readLE<int16_t> (&report[44]),
+		readLE<int16_t> (&report[46])
+	};
 
-		//uint8_t type = report[2];
-		//uint8_t length = report[3];
-		//uint32_t seq = readLE<uint32_t> (&report[4]);
-		uint32_t buttons = readLE<uint32_t, 3> (&report[8]);
-		uint8_t triggers[2] = { report[11], report[12] };
-		int16_t touchpad[2][2] = {
-			{ // Left touchpad/stick
-				readLE<int16_t> (&report[16]),
-				readLE<int16_t> (&report[18])
-			},
-			{ // Right touchpad
-				readLE<int16_t> (&report[20]),
-				readLE<int16_t> (&report[22])
-			}
-		};
-		// 16 bits triggers are not available on wireless devices
-		//int16_t triggers_16[2] = {
-		//	readLE<int16_t> (&report[24]),
-		//	readLE<int16_t> (&report[26])
-		//};
-		int16_t accel[3] = {
-			readLE<int16_t> (&report[28]),
-			readLE<int16_t> (&report[30]),
-			readLE<int16_t> (&report[32])
-		};
-		int16_t gyro[3] = {
-			readLE<int16_t> (&report[34]),
-			readLE<int16_t> (&report[36]),
-			readLE<int16_t> (&report[38])
-		};
-		int16_t quaternion[4] = {
-			readLE<int16_t> (&report[40]),
-			readLE<int16_t> (&report[42]),
-			readLE<int16_t> (&report[44]),
-			readLE<int16_t> (&report[46])
-		};
-
-		bool changed = false;
-		// Touchpads (and stick)
-		bool touchpad_changed[2] = { false };
-		static constexpr uint16_t AxisCodes[2][2] = {
-			{ AbsLeftX, AbsLeftY },
-			{ AbsRightX, AbsRightY }
-		};
-		static constexpr uint16_t TouchPadCodes[2] = { TouchPadLeft, TouchPadRight };
-		for (unsigned int i = 0; i < 2; ++i) {
-			for (unsigned int j = 0; j < 2; ++j) {
-				if (std::abs (_state.touchpad[i][j]-touchpad[i][j]) > AxisFuzz) {
-					_state.touchpad[i][j] = touchpad[i][j];
-					if (_report_single_axis) {
-						eventRead ({
-							{ "type", EventAbs },
-							{ "code", AxisCodes[i][j] },
-							{ "value", touchpad[i][j] }
-						});
-					}
-					touchpad_changed[i] = changed = true;
+	bool changed = false;
+	// Touchpads (and stick)
+	bool touchpad_changed[2] = { false };
+	static constexpr uint16_t AxisCodes[2][2] = {
+		{ AbsLeftX, AbsLeftY },
+		{ AbsRightX, AbsRightY }
+	};
+	static constexpr uint16_t TouchPadCodes[2] = { TouchPadLeft, TouchPadRight };
+	for (unsigned int i = 0; i < 2; ++i) {
+		for (unsigned int j = 0; j < 2; ++j) {
+			if (std::abs (_state.touchpad[i][j]-touchpad[i][j]) > AxisFuzz) {
+				_state.touchpad[i][j] = touchpad[i][j];
+				if (_report_single_axis) {
+					eventRead ({
+						{ "type", EventAbs },
+						{ "code", AxisCodes[i][j] },
+						{ "value", touchpad[i][j] }
+					});
 				}
-			}
-			if (touchpad_changed[i] && _report_linked_axes) {
-				eventRead ({
-					{ "type", EventTouchPad },
-					{ "code", TouchPadCodes[i] },
-					{ "x", _state.touchpad[i][0] },
-					{ "y", _state.touchpad[i][1] }
-				});
+				touchpad_changed[i] = changed = true;
 			}
 		}
-		// Triggers
-		for (unsigned int i = 0; i < 2; ++i) {
-			if (std::abs (_state.triggers[i]-triggers[i]) > TriggerFuzz) {
-				_state.triggers[i] = triggers[i];
-				eventRead ({
-					{ "type", EventAbs },
-					{ "code", AbsLeftTrigger+i },
-					{ "value", triggers[i] }
-				});
-				changed = true;
-			}
-		}
-		// Sensor events
-		bool accel_changed = false, gyro_changed = false;
-		for (unsigned int i = 0; i < 3; ++i) {
-			if (std::abs (_state.accel[i]-accel[i]) > SensorFuzz) {
-				_state.accel[i] = accel[i];
-				accel_changed = true;
-			}
-			if (std::abs (_state.gyro[i]-gyro[i]) > SensorFuzz) {
-				_state.gyro[i] = gyro[i];
-				gyro_changed = true;
-			}
-		}
-		if (accel_changed) {
+		if (touchpad_changed[i] && _report_linked_axes) {
 			eventRead ({
-				{ "type", EventSensor },
-				{ "code", SensorAccel },
-				{ "x", accel[0] },
-				{ "y", accel[1] },
-				{ "z", accel[2] }
+				{ "type", EventTouchPad },
+				{ "code", TouchPadCodes[i] },
+				{ "x", _state.touchpad[i][0] },
+				{ "y", _state.touchpad[i][1] }
+			});
+		}
+	}
+	// Triggers
+	for (unsigned int i = 0; i < 2; ++i) {
+		if (std::abs (_state.triggers[i]-triggers[i]) > TriggerFuzz) {
+			_state.triggers[i] = triggers[i];
+			eventRead ({
+				{ "type", EventAbs },
+				{ "code", AbsLeftTrigger+i },
+				{ "value", triggers[i] }
 			});
 			changed = true;
 		}
-		if (gyro_changed) {
+	}
+	// Sensor events
+	bool accel_changed = false, gyro_changed = false;
+	for (unsigned int i = 0; i < 3; ++i) {
+		if (std::abs (_state.accel[i]-accel[i]) > SensorFuzz) {
+			_state.accel[i] = accel[i];
+			accel_changed = true;
+		}
+		if (std::abs (_state.gyro[i]-gyro[i]) > SensorFuzz) {
+			_state.gyro[i] = gyro[i];
+			gyro_changed = true;
+		}
+	}
+	if (accel_changed) {
+		eventRead ({
+			{ "type", EventSensor },
+			{ "code", SensorAccel },
+			{ "x", accel[0] },
+			{ "y", accel[1] },
+			{ "z", accel[2] }
+		});
+		changed = true;
+	}
+	if (gyro_changed) {
+		eventRead ({
+			{ "type", EventSensor },
+			{ "code", SensorGyro },
+			{ "x", gyro[0] },
+			{ "y", gyro[1] },
+			{ "z", gyro[2] }
+		});
+		changed = true;
+	}
+	// Orientation quaternion
+	bool q_changed = false;
+	for (unsigned int i = 0; i < 4; ++i) {
+		if (std::abs (_state.quaternion[i]-quaternion[i]) > SensorFuzz) {
+			_state.quaternion[i] = quaternion[i];
+			q_changed = true;
+		}
+	}
+	if (q_changed) {
+		eventRead ({
+			{ "type", EventOrientation },
+			{ "w", quaternion[0] },
+			{ "x", quaternion[1] },
+			{ "y", quaternion[2] },
+			{ "z", quaternion[3] }
+		});
+		changed = true;
+	}
+	// Buttons
+	uint32_t buttons_diff = buttons ^ _state.buttons;
+	_state.buttons = buttons;
+	for (unsigned int i = 0; i < BtnCount; ++i) {
+		if (buttons_diff & (1<<i)) {
 			eventRead ({
-				{ "type", EventSensor },
-				{ "code", SensorGyro },
-				{ "x", gyro[0] },
-				{ "y", gyro[1] },
-				{ "z", gyro[2] }
+				{ "type", EventBtn },
+				{ "code", i },
+				{ "value", (buttons & (1<<i) ? 1 : 0) }
 			});
 			changed = true;
 		}
-		// Orientation quaternion
-		bool q_changed = false;
-		for (unsigned int i = 0; i < 4; ++i) {
-			if (std::abs (_state.quaternion[i]-quaternion[i]) > SensorFuzz) {
-				_state.quaternion[i] = quaternion[i];
-				q_changed = true;
-			}
-		}
-		if (q_changed) {
-			eventRead ({
-				{ "type", EventOrientation },
-				{ "w", quaternion[0] },
-				{ "x", quaternion[1] },
-				{ "y", quaternion[2] },
-				{ "z", quaternion[3] }
-			});
-			changed = true;
-		}
-		// Buttons
-		uint32_t buttons_diff = buttons ^ _state.buttons;
-		_state.buttons = buttons;
-		for (unsigned int i = 0; i < BtnCount; ++i) {
-			if (buttons_diff & (1<<i)) {
-				eventRead ({
-					{ "type", EventBtn },
-					{ "code", i },
-					{ "value", (buttons & (1<<i) ? 1 : 0) }
-				});
-				changed = true;
-			}
-		}
-		// Send SYN event only when something else was sent
-		if (changed) {
-			eventRead ({
-				{ "type", EV_SYN },
-				{ "code", SYN_REPORT },
-				{ "value", 0 }
-			});
-		}
+	}
+	// Send SYN event only when something else was sent
+	if (changed) {
+		eventRead ({
+			{ "type", EV_SYN },
+			{ "code", SYN_REPORT },
+			{ "value", 0 }
+		});
 	}
 }
 
@@ -404,11 +403,6 @@ void SteamControllerDevice::calibrateSensors ()
 void SteamControllerDevice::calibrateJoystick ()
 {
 	_receiver->sendRequest (RequestCalibrateJoystick, {});
-}
-
-SteamControllerDevice::operator bool () const
-{
-	return _receiver->isConnected ();
 }
 
 const JSClass SteamControllerDevice::js_class = JS_HELPERS_CLASS("SteamControllerDevice", SteamControllerDevice);

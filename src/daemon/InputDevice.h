@@ -44,16 +44,20 @@ public:
 	virtual ~InputDevice ();
 
 	/**
-	 * Interrupt the event loop so that readEvents returns.
+	 * Start reading events
 	 */
-	virtual void interrupt () = 0;
+	virtual void start () = 0;
 	/**
-	 * Read events from the device until interrupt is called (or an error
-	 * happens).
-	 *
-	 * This method calls eventRead when a event is read.
+	 * Stop reading events
 	 */
-	virtual void readEvents () = 0;
+	virtual void stop () = 0;
+
+	/**
+	 * Signal sent when a fatal error happens.
+	 *
+	 * No more events are read, but stop must still be called.
+	 */
+	sigc::signal<void ()> error;
 
 	/**
 	 * Get the current value/state for the given event
@@ -91,12 +95,6 @@ public:
 	 * Get the serial of the device.
 	 */
 	virtual std::string serial () const = 0;
-
-	/**
-	 * A device in a valid state has a true value. A device in a
-	 * irrecoverable error state has a false value.
-	 */
-	virtual operator bool () const = 0;
 
 	/**
 	 * Signal for input events.

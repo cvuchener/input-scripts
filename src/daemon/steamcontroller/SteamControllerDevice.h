@@ -50,14 +50,14 @@ public:
 	SteamControllerDevice (SteamControllerReceiver *receiver);
 	virtual ~SteamControllerDevice ();
 
-	virtual void interrupt ();
-	virtual void readEvents ();
+	void start () override;
+	void stop () override;
 
-	virtual InputDevice::Event getEvent (InputDevice::Event event);
+	InputDevice::Event getEvent (InputDevice::Event event) override;
 
-	virtual std::string driver () const;
-	virtual std::string name () const;
-	virtual std::string serial () const;
+	std::string driver () const override;
+	std::string name () const override;
+	std::string serial () const override;
 
 	/**
 	 * Set what kind of events will be sent for the touchpads and the stick.
@@ -162,8 +162,6 @@ public:
 	 * \param count The total number "clicks" before the effect ends.
 	 */
 	void hapticFeedback (uint8_t actuator, uint16_t amplitude, uint16_t period, uint16_t count);
-
-	virtual operator bool () const;
 
 	/**
 	 * Settings that can be changed with setSetting.
@@ -297,11 +295,13 @@ public:
 	static const std::pair<std::string, int> js_int_const[];
 	typedef JsHelpers::AbstractClass<SteamControllerDevice> JsClass;
 
-	virtual JSObject *makeJsObject (const JsHelpers::Thread *thread);
+	JSObject *makeJsObject (const JsHelpers::Thread *thread) override;
 
 private:
+	void readEvent (const std::array<uint8_t, 64> &report);
+
 	SteamControllerReceiver *_receiver;
-	MTQueue<std::array<uint8_t, 64>> _report_queue;
+	sigc::connection _input_report_conn;
 	bool _report_single_axis, _report_linked_axes;
 	struct {
 		uint32_t buttons;

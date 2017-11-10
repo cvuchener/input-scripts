@@ -107,7 +107,7 @@ SteamControllerReceiver::~SteamControllerReceiver ()
 {
 	if (_connected) {
 		_connected = false;
-		disconnected ();
+		disconnected.emit ();
 		delete _device;
 	}
 	close (_fd);
@@ -119,7 +119,7 @@ void SteamControllerReceiver::monitor ()
 {
 	// Send connected signal for already connected devices
 	if (_connected)
-		connected ();
+		connected.emit ();
 
 	int ret;
 	int nfds = std::max (_fd, _pipe[0]) + 1;
@@ -175,7 +175,7 @@ void SteamControllerReceiver::parseReport (const std::array<uint8_t, 64> &report
 		case Disconnected:
 			if (_connected) {
 				_connected = false;
-				disconnected ();
+				disconnected.emit ();
 				delete _device;
 				_device = nullptr;
 			}
@@ -185,7 +185,7 @@ void SteamControllerReceiver::parseReport (const std::array<uint8_t, 64> &report
 			if (!_connected) {
 				_connected = true;
 				_device = new SteamControllerDevice (this);
-				connected ();
+				connected.emit ();
 			}
 			break;
 
@@ -200,7 +200,7 @@ void SteamControllerReceiver::parseReport (const std::array<uint8_t, 64> &report
 
 	case ReportInput:
 		if (_connected) {
-			inputReport (report);
+			inputReport.emit (report);
 		}
 		break;
 	}

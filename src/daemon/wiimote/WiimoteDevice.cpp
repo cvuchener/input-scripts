@@ -62,10 +62,26 @@ WiimoteDevice::~WiimoteDevice ()
 	close (_pipe[1]);
 }
 
-void WiimoteDevice::interrupt ()
+void WiimoteDevice::start ()
 {
+	assert (!_thread.joinable ());
+	_thread = std::thread ([this] () {
+		try {
+			readEvents ();
+		}
+		catch (std::exception &e) {
+			Log::error () << "Wiimote device failed: " << e.what () << std::endl;
+			error.emit ();
+		}
+	});
+}
+
+void WiimoteDevice::stop ()
+{
+	assert (_thread.joinable ());
 	char c = 0;
 	write (_pipe[1], &c, sizeof (char));
+	_thread.join ();
 }
 
 void WiimoteDevice::readEvents ()
@@ -177,7 +193,7 @@ void WiimoteDevice::readEvents ()
 					Log::warning () << "Event not implemented" << std::endl;
 					break;
 				case XWII_EVENT_GONE:
-					_error = true;
+					error.emit ();
 					return;
 				default:
 					Log::debug () << "Unsupported xwiimote event type: " << ev.type << std::endl;
@@ -207,11 +223,6 @@ std::string WiimoteDevice::name () const
 std::string WiimoteDevice::serial () const
 {
 	return std::string ();
-}
-
-WiimoteDevice::operator bool () const
-{
-	return !_error;
 }
 
 InputDevice::Event WiimoteDevice::getEvent (InputDevice::Event event)

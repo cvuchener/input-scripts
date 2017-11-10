@@ -68,12 +68,6 @@ HIDPP20Device::HIDPP20Device (HIDPP::Device &&device):
 	_device (std::move (device)),
 	_send_raw_events (false)
 {
-	auto index = _device.deviceIndex ();
-	auto dispatcher = _device.dispatcher ();
-	auto event_handler = [this] (const HIDPP::Report &report) {
-		_report_queue.push (report);
-		return true;
-	};
 	HIDPP20::IFeatureSet feature_set (&_device);
 	unsigned int feature_count = feature_set.getCount ();
 	for (unsigned int i = 0; i < feature_count; ++i) {
@@ -83,8 +77,6 @@ HIDPP20Device::HIDPP20Device (HIDPP::Device &&device):
 			continue;
 		_features_id_index.emplace (id, i);
 		_features_index_id.emplace (i, id);
-		auto it = dispatcher->registerEventHandler (index, i, event_handler);
-		_listener_iterators.push_back (it);
 	}
 
 	if (hasFeature (HIDPP20::IMouseButtonSpy::ID))
@@ -102,127 +94,142 @@ HIDPP20Device::~HIDPP20Device ()
 		dispatcher->unregisterEventHandler (it);
 }
 
-void HIDPP20Device::interrupt ()
+void HIDPP20Device::start ()
 {
-	_report_queue.interrupt ();
+	auto index = _device.deviceIndex ();
+	auto dispatcher = _device.dispatcher ();
+	auto event_handler = [this] (const HIDPP::Report &report) {
+		return eventHandler (report);
+	};
+	HIDPP20::IFeatureSet feature_set (&_device);
+	unsigned int feature_count = feature_set.getCount ();
+	for (const auto &p: _features_id_index) {
+		auto it = dispatcher->registerEventHandler (index, p.second, event_handler);
+		_listener_iterators.push_back (it);
+	}
 }
 
-void HIDPP20Device::readEvents ()
+void HIDPP20Device::stop ()
 {
-	_report_queue.resetInterruption ();
-	while (auto opt = _report_queue.pop ()) {
-		HIDPP::Report &report = opt.value ();
-		if (_mbs && report.featureIndex () == _mbs->i.index ()) {
-			switch (report.function ()) {
-			case HIDPP20::IMouseButtonSpy::MouseButtonEvent: {
-				uint16_t new_buttons = HIDPP20::IMouseButtonSpy::mouseButtonEvent (report);
-				uint16_t button_changed = _mbs->buttons ^ new_buttons;
-				_mbs->buttons = new_buttons;
-				for (unsigned int i = 0; i < 16; ++i) {
-					if (!(button_changed & (1<<i)))
-						continue;
-					eventRead ({
-						{ "type", EV_KEY },
-						{ "code", BTN_MOUSE + i },
-						{ "value", (new_buttons & (1<<i) ? 1 : 0) },
-					});
-				}
-				break;
-			}
-			default:
-				Log::warning () << "Unsupported event from MouseButtonSpy: " << report.function () << std::endl;
-			}
-		}
-		else if (_op && report.featureIndex () == _op->i.index ()) {
-			switch (report.function ()) {
-			case HIDPP20::IOnboardProfiles::CurrentProfileChanged:
-				std::tie (_op->current_profile_mem_type,
-					  _op->current_profile_page) = HIDPP20::IOnboardProfiles::currentProfileChanged (report);
-				eventRead ({
-					{ "type", EventOnboardProfilesCurrentProfile },
-					{ "rom", _op->current_profile_mem_type },
-					{ "index", _op->current_profile_page },
-				});
-				break;
-			case HIDPP20::IOnboardProfiles::CurrentDPIIndexChanged:
-				_op->current_dpi_index = HIDPP20::IOnboardProfiles::currentDPIIndexChanged (report);
-				eventRead ({
-					{ "type", EventOnboardProfilesCurrentDPIIndex },
-					{ "index", _op->current_dpi_index },
-				});
-				break;
-			default:
-				Log::warning () << "Unsupported event from OnboardProfiles: " << report.function () << std::endl;
-			}
-		}
-		else if (_rc4 && report.featureIndex () == _rc4->i.index ()) {
-			switch (report.function ()) {
-			case HIDPP20::IReprogControlsV4::DivertedButtonEvent: {
-				auto new_buttons = HIDPP20::IReprogControlsV4::divertedButtonEvent (report);
-				unsigned int old_i = 0, new_i = 0;
-				for (; old_i < _rc4->buttons.size (); ++old_i) {
-					if (new_i >= new_buttons.size () ||
-					    _rc4->buttons[old_i] != new_buttons[new_i]) {
-						// An old button is missing, it was released.
-						eventRead ({
-							{ "type", EventReprogControlsV4Button },
-							{ "code", _rc4->buttons[old_i] },
-							{ "value", 0 },
-						});
-					}
-					else {
-						// Same button in both array: no change.
-						++new_i;
-					}
-				}
-				for (; new_i < new_buttons.size (); ++new_i) {
-					// New buttons that were not in the old vector are pressed.
-					eventRead ({
-						{ "type", EventReprogControlsV4Button },
-						{ "code", new_buttons[new_i] },
-						{ "value", 1 },
-					});
-				}
-				_rc4->buttons = std::move (new_buttons);
-				break;
-			}
+	auto dispatcher = _device.dispatcher ();
+	for (auto it: _listener_iterators)
+		dispatcher->unregisterEventHandler (it);
+	_listener_iterators.clear ();
+}
 
-			case HIDPP20::IReprogControlsV4::DivertedRawXYEvent: {
-				auto move = HIDPP20::IReprogControlsV4::divertedRawXYEvent (report);
+bool HIDPP20Device::eventHandler (const HIDPP::Report &report)
+{
+	if (_mbs && report.featureIndex () == _mbs->i.index ()) {
+		switch (report.function ()) {
+		case HIDPP20::IMouseButtonSpy::MouseButtonEvent: {
+			uint16_t new_buttons = HIDPP20::IMouseButtonSpy::mouseButtonEvent (report);
+			uint16_t button_changed = _mbs->buttons ^ new_buttons;
+			_mbs->buttons = new_buttons;
+			for (unsigned int i = 0; i < 16; ++i) {
+				if (!(button_changed & (1<<i)))
+					continue;
 				eventRead ({
-					{ "type", EventReprogControlsV4RawXY },
-					{ "x", move.x },
-					{ "y", move.y },
+					{ "type", EV_KEY },
+					{ "code", BTN_MOUSE + i },
+					{ "value", (new_buttons & (1<<i) ? 1 : 0) },
 				});
-				break;
 			}
-			}
-
+			break;
 		}
-
-		if (_send_raw_events) {
-			HIDPP20::IFeatureSet feature_set (&_device);
-			auto feature = _features_index_id.find (report.featureIndex ());
-			if (feature == _features_index_id.end ()) {
-				Log::error () << "Received HID++ report with unknown feature index: " << report.featureIndex () << std::endl;
-				continue;
-			}
-			Event event = {
-				{ "type", EventRawHIDPP },
-				{ "feature", feature->second },
-				{ "function", report.function () },
-			};
-			unsigned int i = 0;
-			for (auto it = report.parameterBegin ();
-			     it != report.parameterEnd ();
-			     ++i, ++it) {
-				std::stringstream key;
-				key << "data" << i;
-				event.emplace (key.str (), *it);
-			}
-			eventRead (event);
+		default:
+			Log::warning () << "Unsupported event from MouseButtonSpy: " << report.function () << std::endl;
 		}
 	}
+	else if (_op && report.featureIndex () == _op->i.index ()) {
+		switch (report.function ()) {
+		case HIDPP20::IOnboardProfiles::CurrentProfileChanged:
+			std::tie (_op->current_profile_mem_type,
+				  _op->current_profile_page) = HIDPP20::IOnboardProfiles::currentProfileChanged (report);
+			eventRead ({
+				{ "type", EventOnboardProfilesCurrentProfile },
+				{ "rom", _op->current_profile_mem_type },
+				{ "index", _op->current_profile_page },
+			});
+			break;
+		case HIDPP20::IOnboardProfiles::CurrentDPIIndexChanged:
+			_op->current_dpi_index = HIDPP20::IOnboardProfiles::currentDPIIndexChanged (report);
+			eventRead ({
+				{ "type", EventOnboardProfilesCurrentDPIIndex },
+				{ "index", _op->current_dpi_index },
+			});
+			break;
+		default:
+			Log::warning () << "Unsupported event from OnboardProfiles: " << report.function () << std::endl;
+		}
+	}
+	else if (_rc4 && report.featureIndex () == _rc4->i.index ()) {
+		switch (report.function ()) {
+		case HIDPP20::IReprogControlsV4::DivertedButtonEvent: {
+			auto new_buttons = HIDPP20::IReprogControlsV4::divertedButtonEvent (report);
+			unsigned int old_i = 0, new_i = 0;
+			for (; old_i < _rc4->buttons.size (); ++old_i) {
+				if (new_i >= new_buttons.size () ||
+				    _rc4->buttons[old_i] != new_buttons[new_i]) {
+					// An old button is missing, it was released.
+					eventRead ({
+						{ "type", EventReprogControlsV4Button },
+						{ "code", _rc4->buttons[old_i] },
+						{ "value", 0 },
+					});
+				}
+				else {
+					// Same button in both array: no change.
+					++new_i;
+				}
+			}
+			for (; new_i < new_buttons.size (); ++new_i) {
+				// New buttons that were not in the old vector are pressed.
+				eventRead ({
+					{ "type", EventReprogControlsV4Button },
+					{ "code", new_buttons[new_i] },
+					{ "value", 1 },
+				});
+			}
+			_rc4->buttons = std::move (new_buttons);
+			break;
+		}
+
+		case HIDPP20::IReprogControlsV4::DivertedRawXYEvent: {
+			auto move = HIDPP20::IReprogControlsV4::divertedRawXYEvent (report);
+			eventRead ({
+				{ "type", EventReprogControlsV4RawXY },
+				{ "x", move.x },
+				{ "y", move.y },
+			});
+			break;
+		}
+		}
+
+	}
+
+	if (_send_raw_events) {
+		HIDPP20::IFeatureSet feature_set (&_device);
+		auto feature = _features_index_id.find (report.featureIndex ());
+		if (feature == _features_index_id.end ()) {
+			Log::error () << "Received HID++ report with unknown feature index: " << report.featureIndex () << std::endl;
+			return true;;
+		}
+		Event event = {
+			{ "type", EventRawHIDPP },
+			{ "feature", feature->second },
+			{ "function", report.function () },
+		};
+		unsigned int i = 0;
+		for (auto it = report.parameterBegin ();
+		     it != report.parameterEnd ();
+		     ++i, ++it) {
+			std::stringstream key;
+			key << "data" << i;
+			event.emplace (key.str (), *it);
+		}
+		eventRead (event);
+	}
+	return true;
 }
 
 InputDevice::Event HIDPP20Device::getEvent (InputDevice::Event event)
@@ -273,12 +280,6 @@ std::string HIDPP20Device::name () const
 std::string HIDPP20Device::serial () const
 {
 	return std::string ();
-}
-
-HIDPP20Device::operator bool () const
-{
-	// The device is always valid, the driver will remove it if there is an error.
-	return true;
 }
 
 bool HIDPP20Device::hasFeature (uint16_t feature_id) const

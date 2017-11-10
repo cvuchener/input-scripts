@@ -33,15 +33,17 @@
 namespace JsHelpers
 {
 
+template <typename T>
+using is_js_class_t = decltype (T::js_class);
+
 // Assigning C++ values to JS::Value
 inline void setJSValue (JSContext *cx, JS::MutableHandleValue var, const std::string &str)
 {
 	var.setString (JS_NewStringCopyZ (cx, str.c_str ()));
 }
 
-template <typename T>
-inline typename std::enable_if<std::is_integral<T>::value>::type
-setJSValue (JSContext *cx, JS::MutableHandleValue var, T value)
+template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+inline void setJSValue (JSContext *cx, JS::MutableHandleValue var, T value)
 {
 	var.setInt32 (value);
 }
@@ -49,6 +51,16 @@ setJSValue (JSContext *cx, JS::MutableHandleValue var, T value)
 inline void setJSValue (JSContext *cx, JS::MutableHandleValue var, double value)
 {
 	var.setNumber (value);
+}
+
+template <typename T, typename = std::enable_if_t<is_detected_exact_v<const JSClass, is_js_class_t, T>>>
+inline void setJSValue (JSContext *cx, JS::MutableHandleValue var, T *object)
+{
+	Thread *thread = static_cast<Thread *> (JS_GetContextPrivate (cx));
+	auto p = thread->getClass (T::js_class.name);
+	if (!p)
+		throw std::runtime_error ("Class not found");
+	var.setObject (*p->newObjectFromPointer (object));
 }
 
 template <typename T>
@@ -75,20 +87,6 @@ inline void setJSValue (JSContext *cx, JS::MutableHandleValue var, const std::ma
 	var.setObject (*obj);
 }
 
-template <typename T>
-using is_js_class_t = decltype (T::js_class);
-
-template <typename T>
-inline typename std::enable_if<is_detected_exact_v<JSClass, is_js_class_t, T>>
-setJSValue (JSContext *cx, JS::MutableHandleValue var, T *object)
-{
-	Thread *thread = static_cast<Thread *> (JS_GetContextPrivate (cx));
-	auto p = thread->getClass (T::js_class.name);
-	if (!p)
-		throw std::runtime_error ("Class not found");
-	var.setObject (p->newObjectFromPointer (object));
-}
-
 // Converting JS::Value to C++ types
 inline void readJSValue (JSContext *cx, std::string &var, JS::HandleValue value)
 {
@@ -101,9 +99,8 @@ inline void readJSValue (JSContext *cx, std::string &var, JS::HandleValue value)
 	var.assign (buffer.begin (), buffer.end ());
 }
 
-template <typename T>
-inline typename std::enable_if<std::is_integral<T>::value>::type
-readJSValue (JSContext *cx, T &var, JS::HandleValue value)
+template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+inline void readJSValue (JSContext *cx, T &var, JS::HandleValue value)
 {
 	if (!value.isNumber ()) {
 		throw std::invalid_argument ("must be a number");
@@ -236,9 +233,9 @@ inline void readJSValue (JSContext *cx, std::function<void (Args...)> &var, JS::
 
 namespace JsHelpers
 {
-template <typename T>
-inline typename std::enable_if<is_detected_exact_v<JSClass, is_js_class_t, T>>
-readJSValue (JSContext *cx, T *&var, JS::HandleValue value)
+template <typename T, typename = std::enable_if_t<is_detected_exact_v<const JSClass, is_js_class_t, T>>
+>
+inline void readJSValue (JSContext *cx, T *&var, JS::HandleValue value)
 {
 	if (!value.isObject ()) {
 		throw std::invalid_argument ("must be an object");

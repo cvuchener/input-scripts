@@ -87,15 +87,6 @@ static const JSClass global_class = {
 	JS_GlobalObjectTraceHook
 };
 
-void Script::readInputEvents (JSContext *cx, JS::HandleObject script_object)
-{
-	while (!_stopping && *_device) {
-		_device->readEvents ();
-	}
-	_stopping = true;
-	execOnJsThreadAsync ([] () {}); // Wake up the script thread
-}
-
 static JSObject *getScriptObject (JSContext *cx, std::string filename)
 {
 	std::string filepath;
@@ -303,14 +294,18 @@ void Script::run (JSContext *cx)
 		throw std::runtime_error ("init function failed");
 
 	// Start reading inputs
-	std::thread input_thread (&Script::readInputEvents, this, cx, JS::HandleObject (script_object));
+	auto error = _device->error.connect ([this] () {
+		_stopping = true;
+		execOnJsThreadAsync ([] () {}); // Wake up the script thread
+	});
+	_device->start ();
 
 	// Perform tasks
 	exec ();
+	error.disconnect ();
 
 	// Stop inputs
-	_device->interrupt ();
-	input_thread.join ();
+	_device->stop ();
 
 	// disconnect all remaining signals
 	for (auto &p: _signal_connections)

@@ -34,7 +34,7 @@ SteamControllerDriver::SteamControllerDriver ()
 SteamControllerDriver::~SteamControllerDriver ()
 {
 	for (auto &pair: _receivers) {
-		pair.second.first->disconnected = [] () {};
+		pair.second.first->disconnected.clear ();
 		pair.second.first->stop ();
 		pair.second.second.join ();
 		delete pair.second.first;
@@ -53,12 +53,12 @@ void SteamControllerDriver::addDevice (udev_device *dev)
 			     << std::endl;
 		return;
 	}
-	receiver->connected = [this, receiver] () {
+	receiver->connected.connect ([this, receiver] () {
 		inputDeviceAdded (receiver->device ());
-	};
-	receiver->disconnected = [this, receiver] () {
+	});
+	receiver->disconnected.connect ([this, receiver] () {
 		inputDeviceRemoved (receiver->device ());
-	};
+	});
 	_receivers.emplace (
 		udev_device_get_syspath (dev),
 		std::pair<SteamControllerReceiver *, std::thread> (

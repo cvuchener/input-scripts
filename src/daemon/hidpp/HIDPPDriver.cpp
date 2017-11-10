@@ -18,6 +18,7 @@
 
 #include "HIDPPDriver.h"
 
+#include "HIDPP10Device.h"
 #include "HIDPP20Device.h"
 
 #include <hidpp10/Device.h>
@@ -54,6 +55,40 @@ static bool isReceiver (HIDPP::Dispatcher *dispatcher)
 	catch (std::exception &e) {
 		return false;
 	}
+}
+
+static std::vector<std::string> find_event_devices (udev_device *dev)
+{
+	std::vector<std::string> res;
+	int ret;
+	udev *ctx = udev_device_get_udev (dev);
+
+	// Enumerate child input devices
+	udev_enumerate *enumerate = udev_enumerate_new (ctx);
+	if (!enumerate)
+		throw std::runtime_error ("udev_enumerate_new failed");
+	ret = udev_enumerate_add_match_subsystem (enumerate, "input");
+	if (ret != 0) {
+		udev_enumerate_unref (enumerate);
+		throw std::system_error (-ret, std::system_category (), "udev_enumerate_add_match_subsystem");
+	}
+	ret = udev_enumerate_add_match_parent (enumerate, dev);
+	if (ret != 0) {
+		udev_enumerate_unref (enumerate);
+		throw std::system_error (-ret, std::system_category (), "udev_enumerate_add_match_parent");
+	}
+	ret = udev_enumerate_scan_devices (enumerate);
+
+	udev_list_entry *current;
+	udev_list_entry_foreach (current, udev_enumerate_get_list_entry (enumerate)) {
+		udev_device *device = udev_device_new_from_syspath (ctx, udev_list_entry_get_name (current));
+		if (strncmp (udev_device_get_sysname (device), "event", 5) == 0)
+			res.emplace_back (udev_device_get_devnode (device));
+		udev_device_unref (device);
+	}
+	udev_enumerate_unref (enumerate);
+
+	return res;
 }
 
 void HIDPPDriver::addDevice (udev_device *dev)
@@ -94,13 +129,27 @@ void HIDPPDriver::addDevice (udev_device *dev)
 				index, HIDPP10::DeviceConnection,
 				std::bind (&HIDPPDriver::receiverEvent, this, node, std::placeholders::_1));
 			// Try adding wireless devices
+			// TODO: find DJ event devices
 			addDevice (node, static_cast<HIDPP::DeviceIndex> (i));
 		}
 	}
 	else {
+		std::vector<std::string> event_devices;
+		try {
+			// Find parent USB device
+			udev_device *usb_device = dev;
+			const char *devtype;
+			while (!(devtype = udev_device_get_devtype (usb_device)) || strcmp(devtype, "usb_device") != 0)
+				usb_device = udev_device_get_parent (usb_device);
+			event_devices = find_event_devices (usb_device);
+		}
+		catch (std::exception &e) {
+			Log::error () << "Failed to enumerate event devices: " << e.what () << std::endl;
+		}
+
 		// Try both corded device index
 		for (auto index: { HIDPP::DefaultDevice, HIDPP::CordedDevice }) {
-			addDevice (node, index);
+			addDevice (node, index, event_devices);
 		}
 	}
 }
@@ -117,7 +166,7 @@ void HIDPPDriver::removeDevice (udev_device *dev)
 	_nodes.erase (it);
 }
 
-void HIDPPDriver::addDevice (Node *node, HIDPP::DeviceIndex index)
+void HIDPPDriver::addDevice (Node *node, HIDPP::DeviceIndex index, const std::vector<std::string> &paths)
 {
 	std::unique_ptr<InputDevice> device;
 	try {
@@ -126,6 +175,9 @@ void HIDPPDriver::addDevice (Node *node, HIDPP::DeviceIndex index)
 		std::tie (major, minor) = dev.protocolVersion ();
 		if (major >= 2) {
 			device = std::make_unique<HIDPP20Device> (std::move (dev));
+		}
+		else {
+			device = std::make_unique<HIDPP10Device> (std::move (dev), paths);
 		}
 	}
 	catch (std::exception &e) {

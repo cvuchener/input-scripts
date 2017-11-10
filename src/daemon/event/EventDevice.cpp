@@ -27,8 +27,7 @@ extern "C" {
 #include <fcntl.h>
 }
 
-EventDevice::EventDevice (const std::string &path):
-	_error (false)
+EventDevice::EventDevice (const std::string &path)
 {
 	int ret;
 
@@ -39,25 +38,62 @@ EventDevice::EventDevice (const std::string &path):
 	}
 	ret = libevdev_new_from_fd (_fd, &_dev);
 	if (ret != 0) {
+		close (_fd);
 		throw std::runtime_error ("libevdev_new_from_fd failed");
 	}
 	if (-1 == pipe2 (_pipe, O_CLOEXEC)) {
+		libevdev_free (_dev);
+		close (_fd);
 		throw std::runtime_error ("Failed to create pipe");
 	}
 }
 
-EventDevice::~EventDevice ()
+EventDevice::EventDevice (EventDevice &&other):
+	_thread (std::move (other._thread))
 {
-	libevdev_free (_dev);
-	close (_fd);
-	close (_pipe[0]);
-	close (_pipe[1]);
+	_fd = other._fd;
+	other._fd = -1;
+	for (int i = 0; i < 2; ++i) {
+		_pipe[i] = other._pipe[i];
+		other._pipe[i] = -1;
+	}
+	_dev = other._dev;
+	other._dev = nullptr;
 }
 
-void EventDevice::interrupt ()
+EventDevice::~EventDevice ()
 {
+	if (_thread.joinable ())
+		stop ();
+	if (_dev)
+		libevdev_free (_dev);
+	if (_fd != -1)
+		close (_fd);
+	for (int i = 0; i < 2; ++i)
+		if (_pipe[i] != -1)
+			close (_pipe[i]);
+}
+
+void EventDevice::start ()
+{
+	assert (!_thread.joinable ());
+	_thread = std::thread ([this] () {
+		try {
+			readEvents ();
+		}
+		catch (std::exception &e) {
+			Log::error () << "Event device failed: " << e.what () << std::endl;
+			error.emit ();
+		}
+	});
+}
+
+void EventDevice::stop ()
+{
+	assert (_thread.joinable ());
 	char c = 0;
 	write (_pipe[1], &c, sizeof (char));
+	_thread.join ();
 }
 
 void EventDevice::readEvents ()
@@ -105,7 +141,7 @@ void EventDevice::readEvents ()
 		}
 	} while (!(ret < 0 && ret != -EAGAIN));
 	Log::error () << "libevdev_next_event: " << strerror (-ret) << std::endl;
-	_error = true;
+	error.emit ();
 }
 
 std::string EventDevice::driver () const
@@ -130,12 +166,6 @@ std::string EventDevice::serial () const
 	else
 		return std::string ();
 }
-
-EventDevice::operator bool () const
-{
-	return !_error;
-}
-
 
 void EventDevice::grab (bool grab_mode)
 {

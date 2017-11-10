@@ -38,18 +38,18 @@ public:
 	 * \param path A path to an event device node (usually /dev/input/eventX).
 	 */
 	EventDevice (const std::string &path);
+	EventDevice (const EventDevice &) = delete;
+	EventDevice (EventDevice &&);
 	virtual ~EventDevice ();
 
-	virtual void interrupt ();
-	virtual void readEvents ();
+	void start () override;
+	void stop () override;
 
-	virtual InputDevice::Event getEvent (InputDevice::Event event);
+	InputDevice::Event getEvent (InputDevice::Event event) override;
 
-	virtual std::string driver () const;
-	virtual std::string name () const;
-	virtual std::string serial () const;
-
-	virtual operator bool () const;
+	std::string driver () const override;
+	std::string name () const override;
+	std::string serial () const override;
 
 	/**
 	 * Grab or ungrab the device.
@@ -65,11 +65,13 @@ public:
 	static const JSFunctionSpec js_fs[];
 	typedef JsHelpers::AbstractClass<EventDevice> JsClass;
 
-	virtual JSObject *makeJsObject (const JsHelpers::Thread *thread);
+	JSObject *makeJsObject (const JsHelpers::Thread *thread) override;
 
 private:
+	void readEvents ();
+
 	int _fd, _pipe[2];
-	bool _error;
+	std::thread _thread;
 	struct libevdev *_dev;
 
 	static bool _registered;

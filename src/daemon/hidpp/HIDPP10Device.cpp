@@ -25,17 +25,12 @@
 #include <hidpp10/IIndividualFeatures.h>
 #include <hidpp10/IResolution.h>
 
-HIDPP10Device::HIDPP10Device (HIDPP::Device &&device):
+HIDPP10Device::HIDPP10Device (HIDPP::Device &&device, const std::vector<std::string> &paths):
 	_device (std::move (device)),
 	_mouse_info (HIDPP10::getMouseInfo (_device.productID ()))
 {
-	// TODO: Add events
-	//auto index = _device.deviceIndex ();
-	//auto dispatcher = _device.dispatcher ();
-	//auto event_handler = [this] (const HIDPP::Report &report) {
-	//	_report_queue.push (report);
-	//	return true;
-	//};
+	for (const auto &path: paths)
+		_evdev.emplace_back (path);
 }
 
 HIDPP10Device::~HIDPP10Device ()
@@ -45,17 +40,20 @@ HIDPP10Device::~HIDPP10Device ()
 		dispatcher->unregisterEventHandler (it);
 }
 
-void HIDPP10Device::interrupt ()
+void HIDPP10Device::start ()
 {
-	_report_queue.interrupt ();
+	// TODO: Add HID++ events
+
+	for (auto &evdev: _evdev)
+		evdev.start ();
 }
 
-void HIDPP10Device::readEvents ()
+void HIDPP10Device::stop ()
 {
-	_report_queue.resetInterruption ();
-	while (auto opt = _report_queue.pop ()) {
-		//HIDPP::Report &report = opt.value ();
-	}
+	// TODO: Add HID++ events
+
+	for (auto &evdev: _evdev)
+		evdev.stop ();
 }
 
 InputDevice::Event HIDPP10Device::getEvent (InputDevice::Event event)
@@ -78,10 +76,11 @@ std::string HIDPP10Device::serial () const
 	return std::string ();
 }
 
-HIDPP10Device::operator bool () const
+std::vector<EventDevice *> HIDPP10Device::getEventDevices ()
 {
-	// The device is always valid, the driver will remove it if there is an error.
-	return true;
+	std::vector<EventDevice *> devices (_evdev.size ());
+	std::transform (_evdev.begin (), _evdev.end (), devices.begin (), [] (auto &dev) { return &dev; });
+	return devices;
 }
 
 std::vector<uint8_t> HIDPP10Device::setRegister (uint8_t address, const std::vector<uint8_t> &params, std::size_t result_size)
@@ -159,6 +158,7 @@ void HIDPP10Device::setCurrentResolution (const std::vector<unsigned int> &dpi)
 const JSClass HIDPP10Device::js_class = JS_HELPERS_CLASS("HIDPP10Device", HIDPP10Device);
 
 const JSFunctionSpec HIDPP10Device::js_fs[] = {
+	JS_HELPERS_METHOD("getEventDevices", HIDPP10Device::getEventDevices),
 	JS_HELPERS_METHOD("setRegister", HIDPP10Device::setRegister),
 	JS_HELPERS_METHOD("getRegister", HIDPP10Device::getRegister),
 	JS_HELPERS_METHOD("getIndividualFeatureFlags", HIDPP10Device::getIndividualFeatureFlags),

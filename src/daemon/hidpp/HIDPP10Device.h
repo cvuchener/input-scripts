@@ -20,6 +20,7 @@
 #define HIDPP10_DEVICE_H
 
 #include "../InputDevice.h"
+#include "../event/EventDevice.h"
 
 #include <hidpp10/Device.h>
 #include <hidpp/Dispatcher.h>
@@ -32,19 +33,19 @@ struct MouseInfo;
 class HIDPP10Device: public InputDevice
 {
 public:
-	HIDPP10Device (HIDPP::Device &&device);
+	HIDPP10Device (HIDPP::Device &&device, const std::vector<std::string> &paths);
 	virtual ~HIDPP10Device ();
 
-	virtual void interrupt ();
-	virtual void readEvents ();
+	void start () override;
+	void stop () override;
 
-	virtual InputDevice::Event getEvent (InputDevice::Event event);
+	InputDevice::Event getEvent (InputDevice::Event event) override;
 
-	virtual std::string driver () const;
-	virtual std::string name () const;
-	virtual std::string serial () const;
+	std::string driver () const override;
+	std::string name () const override;
+	std::string serial () const override;
 
-	virtual operator bool () const;
+	std::vector<EventDevice *> getEventDevices ();
 
 	std::vector<uint8_t> setRegister (uint8_t address, const std::vector<uint8_t> &params, std::size_t result_size);
 	std::vector<uint8_t> getRegister (uint8_t address, const std::vector<uint8_t> &params, std::size_t result_size);
@@ -66,6 +67,7 @@ private:
 	bool eventHandler (const HIDPP::Report &report);
 
 	HIDPP10::Device _device;
+	std::vector<EventDevice> _evdev;
 	const HIDPP10::MouseInfo *_mouse_info;
 
 	std::vector<HIDPP::Dispatcher::listener_iterator> _listener_iterators;

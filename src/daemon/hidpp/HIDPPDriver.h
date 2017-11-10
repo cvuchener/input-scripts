@@ -43,7 +43,7 @@ private:
 		std::thread thread;
 	};
 	std::map<std::string, Node> _nodes;
-	void addDevice (Node *node, HIDPP::DeviceIndex index);
+	void addDevice (Node *node, HIDPP::DeviceIndex index, const std::vector<std::string> &paths = std::vector<std::string> ());
 	void removeDevice (Node *node, HIDPP::DeviceIndex index);
 	void dispatcherRun (Node *node);
 	bool receiverEvent (Node *node, const HIDPP::Report &report);

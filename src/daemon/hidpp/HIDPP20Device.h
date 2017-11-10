@@ -41,16 +41,14 @@ public:
 	HIDPP20Device (HIDPP::Device &&device);
 	virtual ~HIDPP20Device ();
 
-	virtual void interrupt ();
-	virtual void readEvents ();
+	void start () override;
+	void stop () override;
 
-	virtual InputDevice::Event getEvent (InputDevice::Event event);
+	InputDevice::Event getEvent (InputDevice::Event event) override;
 
-	virtual std::string driver () const;
-	virtual std::string name () const;
-	virtual std::string serial () const;
-
-	virtual operator bool () const;
+	std::string driver () const override;
+	std::string name () const override;
+	std::string serial () const override;
 
 	bool hasFeature (uint16_t feature_id) const;
 	std::vector<uint8_t> callFunction (uint16_t id, unsigned int function, const std::vector<uint8_t> &params);
@@ -94,7 +92,7 @@ public:
 	static const std::pair<std::string, int> js_int_const[];
 	typedef JsHelpers::AbstractClass<HIDPP20Device> JsClass;
 
-	virtual JSObject *makeJsObject (const JsHelpers::Thread *thread);
+	JSObject *makeJsObject (const JsHelpers::Thread *thread) override;
 
 private:
 	bool eventHandler (const HIDPP::Report &report);
@@ -115,7 +113,6 @@ private:
 	std::unique_ptr<ReprogControlsV4> _rc4;
 
 	std::vector<HIDPP::Dispatcher::listener_iterator> _listener_iterators;
-	MTQueue<HIDPP::Report> _report_queue;
 
 	static bool _registered;
 };
