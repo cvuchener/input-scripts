@@ -61,6 +61,11 @@ InputDevice::Event HIDPP10Device::getEvent (InputDevice::Event event)
 	throw std::invalid_argument ("invalid event type");
 }
 
+int32_t HIDPP10Device::getSimpleEvent (uint16_t type, uint16_t code)
+{
+	throw std::invalid_argument ("invalid event type");
+}
+
 std::string HIDPP10Device::driver () const
 {
 	return "hidpp10";

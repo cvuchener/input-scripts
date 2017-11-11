@@ -235,12 +235,9 @@ bool HIDPP20Device::eventHandler (const HIDPP::Report &report)
 InputDevice::Event HIDPP20Device::getEvent (InputDevice::Event event)
 {
 	int type = event.at ("type");
-	int code;
 	switch (type) {
 	case EV_KEY:
-		code = event.at ("code");
-		if (code >= BTN_MOUSE && code < BTN_MOUSE+16)
-			event["value"] = (_mbs->buttons & (1<<(code-BTN_MOUSE)) ? 1 : 0);
+		event["value"] = getSimpleEvent (type, event.at ("code"));
 		return event;
 
 	case EventOnboardProfilesCurrentProfile:
@@ -256,11 +253,23 @@ InputDevice::Event HIDPP20Device::getEvent (InputDevice::Event event)
 		throw std::invalid_argument ("raw HID++ cannot be queried");
 
 	case EventReprogControlsV4Button: {
-		code = event.at ("code");
-		auto it = std::find (_rc4->buttons.begin (), _rc4->buttons.end (), code);
+		auto it = std::find (_rc4->buttons.begin (), _rc4->buttons.end (), event.at ("code"));
 		event["value"] = (it == _rc4->buttons.end () ? 0 : 1);
 		return event;
 	}
+
+	default:
+		throw std::invalid_argument ("invalid event type");
+	}
+}
+
+int32_t HIDPP20Device::getSimpleEvent (uint16_t type, uint16_t code)
+{
+	switch (type) {
+	case EV_KEY:
+		if (code >= BTN_MOUSE && code < BTN_MOUSE+16)
+			return (_mbs->buttons & (1<<(code-BTN_MOUSE)) ? 1 : 0);
+		throw std::invalid_argument ("invalid button code");
 
 	default:
 		throw std::invalid_argument ("invalid event type");

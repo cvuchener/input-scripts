@@ -46,6 +46,7 @@ public:
 	void stop () override;
 
 	InputDevice::Event getEvent (InputDevice::Event event) override;
+	int32_t getSimpleEvent (uint16_t type, uint16_t code) override;
 
 	std::string driver () const override;
 	std::string name () const override;

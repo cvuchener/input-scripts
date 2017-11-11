@@ -113,7 +113,10 @@ void SteamControllerDevice::readEvent (const std::array<uint8_t, 64> &report)
 		readLE<int16_t> (&report[46])
 	};
 
-	bool changed = false;
+	// store events to send them only when the whole report is parsed
+	std::vector<std::tuple<uint16_t, uint16_t, int32_t>> simple_events;
+	std::vector<InputDevice::Event> events;
+
 	// Touchpads (and stick)
 	bool touchpad_changed[2] = { false };
 	static constexpr uint16_t AxisCodes[2][2] = {
@@ -126,17 +129,13 @@ void SteamControllerDevice::readEvent (const std::array<uint8_t, 64> &report)
 			if (std::abs (_state.touchpad[i][j]-touchpad[i][j]) > AxisFuzz) {
 				_state.touchpad[i][j] = touchpad[i][j];
 				if (_report_single_axis) {
-					eventRead ({
-						{ "type", EventAbs },
-						{ "code", AxisCodes[i][j] },
-						{ "value", touchpad[i][j] }
-					});
+					simple_events.emplace_back (EventAbs, AxisCodes[i][j], touchpad[i][j]);
 				}
-				touchpad_changed[i] = changed = true;
+				touchpad_changed[i] = true;
 			}
 		}
 		if (touchpad_changed[i] && _report_linked_axes) {
-			eventRead ({
+			events.push_back ({
 				{ "type", EventTouchPad },
 				{ "code", TouchPadCodes[i] },
 				{ "x", _state.touchpad[i][0] },
@@ -148,12 +147,7 @@ void SteamControllerDevice::readEvent (const std::array<uint8_t, 64> &report)
 	for (unsigned int i = 0; i < 2; ++i) {
 		if (std::abs (_state.triggers[i]-triggers[i]) > TriggerFuzz) {
 			_state.triggers[i] = triggers[i];
-			eventRead ({
-				{ "type", EventAbs },
-				{ "code", AbsLeftTrigger+i },
-				{ "value", triggers[i] }
-			});
-			changed = true;
+			simple_events.emplace_back (EventAbs, AbsLeftTrigger+i, triggers[i]);
 		}
 	}
 	// Sensor events
@@ -169,24 +163,22 @@ void SteamControllerDevice::readEvent (const std::array<uint8_t, 64> &report)
 		}
 	}
 	if (accel_changed) {
-		eventRead ({
+		events.push_back ({
 			{ "type", EventSensor },
 			{ "code", SensorAccel },
 			{ "x", accel[0] },
 			{ "y", accel[1] },
 			{ "z", accel[2] }
 		});
-		changed = true;
 	}
 	if (gyro_changed) {
-		eventRead ({
+		events.push_back ({
 			{ "type", EventSensor },
 			{ "code", SensorGyro },
 			{ "x", gyro[0] },
 			{ "y", gyro[1] },
 			{ "z", gyro[2] }
 		});
-		changed = true;
 	}
 	// Orientation quaternion
 	bool q_changed = false;
@@ -197,78 +189,44 @@ void SteamControllerDevice::readEvent (const std::array<uint8_t, 64> &report)
 		}
 	}
 	if (q_changed) {
-		eventRead ({
+		events.push_back ({
 			{ "type", EventOrientation },
 			{ "w", quaternion[0] },
 			{ "x", quaternion[1] },
 			{ "y", quaternion[2] },
 			{ "z", quaternion[3] }
 		});
-		changed = true;
 	}
 	// Buttons
 	uint32_t buttons_diff = buttons ^ _state.buttons;
 	_state.buttons = buttons;
 	for (unsigned int i = 0; i < BtnCount; ++i) {
-		if (buttons_diff & (1<<i)) {
-			eventRead ({
-				{ "type", EventBtn },
-				{ "code", i },
-				{ "value", (buttons & (1<<i) ? 1 : 0) }
-			});
-			changed = true;
-		}
+		if (buttons_diff & (1<<i))
+			simple_events.emplace_back (EventBtn, i, (buttons & (1<<i) ? 1 : 0));
 	}
+
+	// send events
+	for (const auto &t: simple_events)
+		simpleEventRead (std::get<0> (t), std::get<1> (t), std::get<2> (t));
+	for (const auto &e: events)
+		eventRead (e);
 	// Send SYN event only when something else was sent
-	if (changed) {
-		eventRead ({
-			{ "type", EV_SYN },
-			{ "code", SYN_REPORT },
-			{ "value", 0 }
-		});
+	if (!simple_events.empty() || !events.empty ()) {
+		simpleEventRead (EV_SYN, SYN_REPORT, 0);
 	}
 }
 
 InputDevice::Event SteamControllerDevice::getEvent (InputDevice::Event event)
 {
 	int type = event["type"];
-	int code;
 	switch (type) {
 	case EventBtn:
-		code = event["code"];
-		if (code < 0 || code >= BtnCount)
-			throw std::invalid_argument ("invalid button code");
-		event["value"] = (_state.buttons & (1<<code)) >> code;
+	case EventAbs:
+		event["value"] = getSimpleEvent (type, event.at ("code"));
 		return event;
 
-	case EventAbs:
-		code = event["code"];
-		switch (code) {
-		case AbsLeftX:
-			event["value"] =  _state.touchpad[0][0];
-			return event;
-		case AbsLeftY:
-			event["value"] =  _state.touchpad[0][1];
-			return event;
-		case AbsRightX:
-			event["value"] =  _state.touchpad[1][0];
-			return event;
-		case AbsRightY:
-			event["value"] =  _state.touchpad[1][1];
-			return event;
-		case AbsLeftTrigger:
-			event["value"] =  _state.triggers[0];
-			return event;
-		case AbsRightTrigger:
-			event["value"] =  _state.triggers[1];
-			return event;
-		default:
-			throw std::invalid_argument ("invalid abs axis code");
-		}
-
 	case EventSensor:
-		code = event["code"];
-		switch (code) {
+		switch (event.at ("code")) {
 		case SensorAccel:
 			event["x"] = _state.accel[0];
 			event["y"] = _state.accel[1];
@@ -289,6 +247,37 @@ InputDevice::Event SteamControllerDevice::getEvent (InputDevice::Event event)
 		event["y"] = _state.quaternion[2];
 		event["z"] = _state.quaternion[3];
 		return event;
+
+	default:
+		throw std::invalid_argument ("invalid event type");
+	}
+}
+
+int32_t SteamControllerDevice::getSimpleEvent (uint16_t type, uint16_t code)
+{
+	switch (type) {
+	case EventBtn:
+		if (code < 0 || code >= BtnCount)
+			throw std::invalid_argument ("invalid button code");
+		return (_state.buttons & (1<<code)) >> code;
+
+	case EventAbs:
+		switch (code) {
+		case AbsLeftX:
+			return  _state.touchpad[0][0];
+		case AbsLeftY:
+			return  _state.touchpad[0][1];
+		case AbsRightX:
+			return  _state.touchpad[1][0];
+		case AbsRightY:
+			return  _state.touchpad[1][1];
+		case AbsLeftTrigger:
+			return  _state.triggers[0];
+		case AbsRightTrigger:
+			return  _state.triggers[1];
+		default:
+			throw std::invalid_argument ("invalid abs axis code");
+		}
 
 	default:
 		throw std::invalid_argument ("invalid event type");

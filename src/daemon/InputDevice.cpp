@@ -50,10 +50,21 @@ void InputDevice::eventRead (const Event &e)
 	event.emit (e);
 }
 
+void InputDevice::simpleEventRead (uint16_t type, uint16_t code, int32_t value)
+{
+	simpleEvent.emit (type, code, value);
+	eventRead ({
+		{ "type", type },
+		{ "code", code },
+		{ "value", value },
+	});
+}
+
 const JSClass InputDevice::js_class = JS_HELPERS_CLASS("InputDevice", InputDevice);
 
 const JSFunctionSpec InputDevice::js_fs[] = {
 	JS_HELPERS_METHOD("getEvent", InputDevice::getEvent),
+	JS_HELPERS_METHOD("getSimpleEvent", InputDevice::getSimpleEvent),
 	JS_HELPERS_METHOD("keyPressed", InputDevice::keyPressed),
 	JS_HELPERS_METHOD("getAxisValue", InputDevice::getAxisValue),
 	JS_FS_END
@@ -61,6 +72,7 @@ const JSFunctionSpec InputDevice::js_fs[] = {
 
 const JsHelpers::SignalMap InputDevice::js_signals = {
 	{ "event", JsHelpers::make_signal_connector (&InputDevice::event) },
+	{ "simpleEvent", JsHelpers::make_signal_connector (&InputDevice::simpleEvent) },
 };
 
 bool InputDevice::_registered = ClassManager::registerClass<InputDevice::JsClass> ();

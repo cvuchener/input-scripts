@@ -67,6 +67,10 @@ public:
 	 */
 	virtual Event getEvent (Event) = 0;
 	/**
+	 * Get the current value/state for the given event by type and code.
+	 */
+	virtual int32_t getSimpleEvent (uint16_t type, uint16_t code) = 0;
+	/**
 	 * Get the current state of the key \p code.
 	 *
 	 * \param code A valid code for an event with type EV_KEY.
@@ -97,9 +101,10 @@ public:
 	virtual std::string serial () const = 0;
 
 	/**
-	 * Signal for input events.
+	 * Signals for input events.
 	 */
 	sigc::signal<void (Event)> event;
+	sigc::signal<void (uint16_t, uint16_t, int32_t)> simpleEvent;
 
 	static const JSClass js_class;
 	static const JSFunctionSpec js_fs[];
@@ -116,6 +121,7 @@ public:
 
 protected:
 	void eventRead (const Event &);
+	void simpleEventRead (uint16_t type, uint16_t code, int32_t value);
 
 private:
 	static bool _registered;

@@ -106,11 +106,7 @@ void WiimoteDevice::readEvents ()
 			while (0 == (ret = xwii_iface_dispatch (_dev, &ev, sizeof (struct xwii_event)))) {
 				switch (ev.type) {
 				case XWII_EVENT_KEY:
-					eventRead ({
-						{ "type", ev.type },
-						{ "code", ev.v.key.code },
-						{ "value", ev.v.key.state }
-					});
+					simpleEventRead (ev.type, ev.v.key.code, ev.v.key.state);
 					break;
 				case XWII_EVENT_ACCEL:
 					eventRead ({
@@ -227,7 +223,14 @@ std::string WiimoteDevice::serial () const
 
 InputDevice::Event WiimoteDevice::getEvent (InputDevice::Event event)
 {
+	Log::warning () << "WiimoteDevice::getEvent not implemented" << std::endl;
 	return event;
+}
+
+int32_t WiimoteDevice::getSimpleEvent (uint16_t type, uint16_t code)
+{
+	Log::warning () << "WiimoteDevice::getSimpleEvent not implemented" << std::endl;
+	return 0;
 }
 
 void WiimoteDevice::open (unsigned ifaces)

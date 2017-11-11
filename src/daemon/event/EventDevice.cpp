@@ -118,18 +118,10 @@ void EventDevice::readEvents ()
 				ret = libevdev_next_event (_dev, LIBEVDEV_READ_FLAG_NORMAL, &ev);
 
 				if (ret == LIBEVDEV_READ_STATUS_SUCCESS) {
-					eventRead ({
-						{ "type", ev.type },
-						{ "code", ev.code },
-						{ "value", ev.value }
-					});
+					simpleEventRead (ev.type, ev.code, ev.value);
 				}
 				while (ret == LIBEVDEV_READ_STATUS_SYNC) {
-					eventRead ({
-						{ "type", ev.type },
-						{ "code", ev.code },
-						{ "value", ev.value }
-					});
+					simpleEventRead (ev.type, ev.code, ev.value);
 					ret = libevdev_next_event (_dev, LIBEVDEV_READ_FLAG_SYNC, &ev);
 				}
 			} while (ret >= 0);
@@ -178,10 +170,17 @@ void EventDevice::grab (bool grab_mode)
 
 InputDevice::Event EventDevice::getEvent (InputDevice::Event event)
 {
-	if (!libevdev_fetch_event_value (_dev, event["type"], event["code"], &event["value"])) {
+	event["value"] = getSimpleEvent (event["type"], event["code"]);
+	return event;
+}
+
+int32_t EventDevice::getSimpleEvent (uint16_t type, uint16_t code)
+{
+	int32_t value;
+	if (!libevdev_fetch_event_value (_dev, type, code, &value)) {
 		throw std::invalid_argument ("Event type or code does not exist on this device");
 	}
-	return event;
+	return value;
 }
 
 const JSClass EventDevice::js_class = JS_HELPERS_CLASS("EventDevice", EventDevice);
