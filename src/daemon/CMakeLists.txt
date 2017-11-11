@@ -11,6 +11,7 @@ set(INPUT_SCRIPTS_SOURCES
 	classes/UInput.cpp
 	classes/DBusProxy.cpp
 	classes/Remapper.cpp
+	classes/EventFilter.cpp
 	Driver.cpp
 	InputDevice.cpp
 	event/EventDriver.cpp
