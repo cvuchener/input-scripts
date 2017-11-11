@@ -227,14 +227,16 @@ inline void readJSValue (JSContext *cx, std::function<void (Args...)> &var, JS::
 	});
 }
 
+template <typename T, typename = std::enable_if_t<is_detected_exact_v<const JSClass, is_js_class_t, T>>>
+void readJSValue (JSContext *cx, T *&var, JS::HandleValue value);
+
 }
 
 #include "../ClassManager.h"
 
 namespace JsHelpers
 {
-template <typename T, typename = std::enable_if_t<is_detected_exact_v<const JSClass, is_js_class_t, T>>
->
+template <typename T, typename = std::enable_if_t<is_detected_exact_v<const JSClass, is_js_class_t, T>>>
 inline void readJSValue (JSContext *cx, T *&var, JS::HandleValue value)
 {
 	if (!value.isObject ()) {

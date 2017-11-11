@@ -10,6 +10,7 @@ set(INPUT_SCRIPTS_SOURCES
 	ClassManager.cpp
 	classes/UInput.cpp
 	classes/DBusProxy.cpp
+	classes/Remapper.cpp
 	Driver.cpp
 	InputDevice.cpp
 	event/EventDriver.cpp
