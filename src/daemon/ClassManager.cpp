@@ -71,6 +71,9 @@ bool ClassManager::inherits (const std::string &cls_name, const std::string &par
 		return false;
 	}
 
+	if (cls == parent)
+		return true;
+
 	if (cls->second.root != parent->second.root)
 		return false;
 	ClassData::Node *current = cls->second.parent;
