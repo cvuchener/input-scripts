@@ -19,18 +19,18 @@
 #ifndef SYSTEM_H
 #define SYSTEM_H
 
-#include "JsHelpers/JsHelpers.h"
+#include "jstpl/jstpl.h"
 #include "Timer.h"
 #include <list>
 
-namespace JsHelpers {
+namespace jstpl {
 class Thread;
 }
 
 class System
 {
 public:
-	System (JsHelpers::Thread *js_thread);
+	System (jstpl::Thread *js_thread);
 	~System ();
 
 	void setTimeout (std::function<void ()> callback, unsigned int delay);
@@ -41,10 +41,10 @@ public:
 	static const JSClass js_class;
 	static const JSFunctionSpec js_fs[];
 
-	typedef JsHelpers::AbstractClass<System> JsClass;
+	typedef jstpl::AbstractClass<System> JsClass;
 
 private:
-	JsHelpers::Thread *_js_thread;
+	jstpl::Thread *_js_thread;
 	std::mutex _timers_mutex;
 	std::list<Timer<int, std::milli>> _timers;
 };

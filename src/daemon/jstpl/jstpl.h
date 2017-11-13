@@ -16,11 +16,13 @@
  *
  */
 
-#ifndef JS_HELPERS_H
-#define JS_HELPERS_H
+#ifndef JSTPL_H
+#define JSTPL_H
 
 #include "Types.h"
 #include "Functions.h"
 #include "Class.h"
+#include "ClassManager.h"
+#include "Signal.h"
 
 #endif

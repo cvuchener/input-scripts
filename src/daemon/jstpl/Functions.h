@@ -16,15 +16,15 @@
  *
  */
 
-#ifndef JS_HELPERS_WRAPPERS_H
-#define JS_HELPERS_WRAPPERS_H
+#ifndef JSTPL_WRAPPERS_H
+#define JSTPL_WRAPPERS_H
 
 #include "Types.h"
 
 #include <typeinfo>
 #include <tuple>
 
-namespace JsHelpers
+namespace jstpl
 {
 
 /*

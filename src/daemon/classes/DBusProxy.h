@@ -20,7 +20,7 @@
 #define DBUS_PROXY_H
 
 #include <dbus-c++/dbus.h>
-#include "../JsHelpers/JsHelpers.h"
+#include "../jstpl/jstpl.h"
 
 class DBusProxy:
 	public DBus::InterfaceProxy,
@@ -35,7 +35,7 @@ public:
 	static const JSClass js_class;
 	static const JSFunctionSpec js_fs[];
 	static const std::pair<std::string, int> js_int_const[];
-	typedef JsHelpers::Class<DBusProxy, int, std::string, std::string, std::string> JsClass;
+	typedef jstpl::Class<DBusProxy, int, std::string, std::string, std::string> JsClass;
 
 private:
 	static bool _registered;

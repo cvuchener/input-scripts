@@ -16,8 +16,8 @@
  *
  */
 
-#ifndef JS_HELPERS_THREAD_H
-#define JS_HELPERS_THREAD_H
+#ifndef JSTPL_THREAD_H
+#define JSTPL_THREAD_H
 
 #include <jsapi.h>
 #include <functional>
@@ -27,7 +27,7 @@
 #include "../MTQueue.h"
 #include "../Log.h"
 
-namespace JsHelpers
+namespace jstpl
 {
 
 class BaseClass;

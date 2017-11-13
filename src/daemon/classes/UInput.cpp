@@ -19,7 +19,6 @@
 #include "UInput.h"
 
 #include "../Log.h"
-#include "../ClassManager.h"
 
 extern "C" {
 #include <unistd.h>
@@ -362,36 +361,36 @@ void UInput::readEvents ()
 	}
 }
 
-const JSClass UInput::js_class = JsHelpers::make_class<UInput> ("UInput");
+const JSClass UInput::js_class = jstpl::make_class<UInput> ("UInput");
 
 const JSFunctionSpec UInput::js_fs[] = {
-	JsHelpers::make_method<&UInput::create> ("create"),
-	JsHelpers::make_method<&UInput::destroy> ("destroy"),
-	JsHelpers::make_method<&UInput::setKey> ("setKey"),
-	JsHelpers::make_method<&UInput::setAbs> ("setAbs"),
-	JsHelpers::make_method<&UInput::setRel> ("setRel"),
-	JsHelpers::make_method<&UInput::setFF> ("setFF"),
-	JsHelpers::make_method<&UInput::setFFEffectsMax> ("setFFEffectsMax"),
-	JsHelpers::make_method<&UInput::sendKey> ("sendKey"),
-	JsHelpers::make_method<&UInput::sendAbs> ("sendAbs"),
-	JsHelpers::make_method<&UInput::sendRel> ("sendRel"),
-	JsHelpers::make_method<&UInput::sendSyn> ("sendSyn"),
-	JsHelpers::make_method<&UInput::sendEvent> ("sendEvent"),
-	JsHelpers::make_method<&UInput::setFFUploadEffect> ("setFFUploadEffect"),
-	JsHelpers::make_method<&UInput::setFFEraseEffect> ("setFFEraseEffect"),
-	JsHelpers::make_method<&UInput::setFFStart> ("setFFStart"),
-	JsHelpers::make_method<&UInput::setFFStop> ("setFFStop"),
-	JsHelpers::make_method<&UInput::setFFSetGain> ("setFFSetGain"),
+	jstpl::make_method<&UInput::create> ("create"),
+	jstpl::make_method<&UInput::destroy> ("destroy"),
+	jstpl::make_method<&UInput::setKey> ("setKey"),
+	jstpl::make_method<&UInput::setAbs> ("setAbs"),
+	jstpl::make_method<&UInput::setRel> ("setRel"),
+	jstpl::make_method<&UInput::setFF> ("setFF"),
+	jstpl::make_method<&UInput::setFFEffectsMax> ("setFFEffectsMax"),
+	jstpl::make_method<&UInput::sendKey> ("sendKey"),
+	jstpl::make_method<&UInput::sendAbs> ("sendAbs"),
+	jstpl::make_method<&UInput::sendRel> ("sendRel"),
+	jstpl::make_method<&UInput::sendSyn> ("sendSyn"),
+	jstpl::make_method<&UInput::sendEvent> ("sendEvent"),
+	jstpl::make_method<&UInput::setFFUploadEffect> ("setFFUploadEffect"),
+	jstpl::make_method<&UInput::setFFEraseEffect> ("setFFEraseEffect"),
+	jstpl::make_method<&UInput::setFFStart> ("setFFStart"),
+	jstpl::make_method<&UInput::setFFStop> ("setFFStop"),
+	jstpl::make_method<&UInput::setFFSetGain> ("setFFSetGain"),
 	JS_FS_END
 };
 
 const JSPropertySpec UInput::js_ps[] = {
-	JsHelpers::make_property<&UInput::name, &UInput::setName> ("name"),
-	JsHelpers::make_property<&UInput::busType, &UInput::setBusType> ("busType"),
-	JsHelpers::make_property<&UInput::vendor, &UInput::setVendor> ("vendor"),
-	JsHelpers::make_property<&UInput::product, &UInput::setProduct> ("product"),
-	JsHelpers::make_property<&UInput::version, &UInput::setVersion> ("version"),
+	jstpl::make_property<&UInput::name, &UInput::setName> ("name"),
+	jstpl::make_property<&UInput::busType, &UInput::setBusType> ("busType"),
+	jstpl::make_property<&UInput::vendor, &UInput::setVendor> ("vendor"),
+	jstpl::make_property<&UInput::product, &UInput::setProduct> ("product"),
+	jstpl::make_property<&UInput::version, &UInput::setVersion> ("version"),
 	JS_PS_END
 };
 
-bool UInput::_registered = ClassManager::registerClass<UInput::JsClass> ();
+bool UInput::_registered = jstpl::ClassManager::registerClass<UInput::JsClass> ();

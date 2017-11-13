@@ -19,7 +19,6 @@
 #include "DBusProxy.h"
 
 #include "../DBusConnections.h"
-#include "../ClassManager.h"
 
 DBusProxy::DBusProxy (int bus, std::string service, std::string path, std::string interface):
 	DBus::InterfaceProxy (interface),
@@ -79,7 +78,7 @@ static const char *getSignatureEnd (const char *signature)
 
 template <typename T, typename T2 = T>
 static inline void writeBasicType (JSContext *cx, DBus::MessageIter &iter, JS::HandleValue value) {
-	using JsHelpers::readJSValue;
+	using jstpl::readJSValue;
 	T var;
 	readJSValue (cx, var, value);
 	iter << static_cast<T2> (var);
@@ -87,7 +86,7 @@ static inline void writeBasicType (JSContext *cx, DBus::MessageIter &iter, JS::H
 
 static const char *writeValue (JSContext *cx, DBus::MessageIter &iter, const char *signature, JS::HandleValue value)
 {
-	using JsHelpers::readJSValue;
+	using jstpl::readJSValue;
 
 	switch (signature[0]) {
 	case 'y':
@@ -221,7 +220,7 @@ static const char *writeValue (JSContext *cx, DBus::MessageIter &iter, const cha
 template <typename T, typename T2 = T>
 static inline void readBasicType (JSContext *cx, JS::MutableHandleValue value, DBus::MessageIter &iter)
 {
-	using JsHelpers::setJSValue;
+	using jstpl::setJSValue;
 
 	T var;
 	iter >> var;
@@ -230,7 +229,7 @@ static inline void readBasicType (JSContext *cx, JS::MutableHandleValue value, D
 
 static void readValue (JSContext *cx, JS::MutableHandleValue value, DBus::MessageIter &iter)
 {
-	using JsHelpers::setJSValue;
+	using jstpl::setJSValue;
 
 	const char *signature = iter.signature ();
 	switch (signature[0]) {
@@ -340,7 +339,7 @@ static void readValue (JSContext *cx, JS::MutableHandleValue value, DBus::Messag
 
 bool DBusProxy::call (JSContext *cx, JS::CallArgs &args)
 {
-	using JsHelpers::readJSValue;
+	using jstpl::readJSValue;
 
 	std::string interface, method;
 	try {
@@ -412,12 +411,12 @@ bool DBusProxy::call (JSContext *cx, JS::CallArgs &args)
 	return true;
 }
 
-const JSClass DBusProxy::js_class = JsHelpers::make_class<DBusProxy> ("DBusProxy");
+const JSClass DBusProxy::js_class = jstpl::make_class<DBusProxy> ("DBusProxy");
 
 const JSFunctionSpec DBusProxy::js_fs[] = {
 	{
 		"call",
-		&JsHelpers::LLMethodWrapper<DBusProxy, &DBusProxy::call>,
+		&jstpl::LLMethodWrapper<DBusProxy, &DBusProxy::call>,
 		0, 0
 	},
 	JS_FS_END
@@ -430,4 +429,4 @@ const std::pair<std::string, int> DBusProxy::js_int_const[] = {
 	{ "", 0 }
 };
 
-bool DBusProxy::_registered = ClassManager::registerClass<DBusProxy::JsClass> ();
+bool DBusProxy::_registered = jstpl::ClassManager::registerClass<DBusProxy::JsClass> ();

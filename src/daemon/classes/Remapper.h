@@ -21,7 +21,7 @@
 
 #include "../InputDevice.h"
 #include "UInput.h"
-#include "../JsHelpers/JsHelpers.h"
+#include "../jstpl/jstpl.h"
 
 /**
  * Remap input events from an input device and send them to a uinput device.
@@ -106,7 +106,7 @@ public:
 		static const JSClass js_class;
 		static const JSFunctionSpec js_fs[];
 
-		using JsClass = JsHelpers::AbstractClass<mapped_event>;
+		using JsClass = jstpl::AbstractClass<mapped_event>;
 
 	private:
 		mapped_event (Remapper *parent, const event_id &event);
@@ -168,7 +168,7 @@ public:
 	static const JSClass js_class;
 	static const JSFunctionSpec js_fs[];
 
-	using JsClass = JsHelpers::Class<Remapper, InputDevice *, UInput *>;
+	using JsClass = jstpl::Class<Remapper, InputDevice *, UInput *>;
 
 private:
 	void addModifier (mapped_event *ev, const event_id &mod_ev);

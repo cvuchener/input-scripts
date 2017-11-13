@@ -21,7 +21,7 @@
 #include "Class.h"
 #include "../Log.h"
 
-using namespace JsHelpers;
+using namespace jstpl;
 
 Thread::~Thread ()
 {

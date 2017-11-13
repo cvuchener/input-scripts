@@ -18,8 +18,6 @@
 
 #include "WiimoteDevice.h"
 
-#include "../ClassManager.h"
-
 extern "C" {
 #include <unistd.h>
 #include <fcntl.h>
@@ -375,24 +373,24 @@ const std::pair<std::string, int> WiimoteDevice::js_int_const[] = {
 	{ "", 0 }
 };
 
-const JSClass WiimoteDevice::js_class = JsHelpers::make_class<WiimoteDevice> ("WiimoteDevice");
+const JSClass WiimoteDevice::js_class = jstpl::make_class<WiimoteDevice> ("WiimoteDevice");
 
 const JSFunctionSpec WiimoteDevice::js_fs[] = {
-	JsHelpers::make_method<&WiimoteDevice::open> ("open"),
-	JsHelpers::make_method<&WiimoteDevice::close> ("close"),
-	JsHelpers::make_method<&WiimoteDevice::rumble> ("rumble"),
-	JsHelpers::make_method<&WiimoteDevice::getLED> ("getLED"),
-	JsHelpers::make_method<&WiimoteDevice::setLED> ("setLED"),
-	JsHelpers::make_method<&WiimoteDevice::battery> ("battery"),
-	JsHelpers::make_method<&WiimoteDevice::extension> ("extension"),
-	JsHelpers::make_method<&WiimoteDevice::setMPNormalization> ("setMPNormalization"),
-	//JsHelpers::make_method<&WiimoteDevice::getMPNormalization> ("getMPNormalization"),
+	jstpl::make_method<&WiimoteDevice::open> ("open"),
+	jstpl::make_method<&WiimoteDevice::close> ("close"),
+	jstpl::make_method<&WiimoteDevice::rumble> ("rumble"),
+	jstpl::make_method<&WiimoteDevice::getLED> ("getLED"),
+	jstpl::make_method<&WiimoteDevice::setLED> ("setLED"),
+	jstpl::make_method<&WiimoteDevice::battery> ("battery"),
+	jstpl::make_method<&WiimoteDevice::extension> ("extension"),
+	jstpl::make_method<&WiimoteDevice::setMPNormalization> ("setMPNormalization"),
+	//jstpl::make_method<&WiimoteDevice::getMPNormalization> ("getMPNormalization"),
 	JS_FS_END
 };
 
-JSObject *WiimoteDevice::makeJsObject (const JsHelpers::Thread *thread)
+JSObject *WiimoteDevice::makeJsObject (const jstpl::Thread *thread)
 {
 	return thread->makeJsObject (this);
 }
 
-bool WiimoteDevice::_registered = ClassManager::registerClass<WiimoteDevice::JsClass> ("InputDevice");
+bool WiimoteDevice::_registered = jstpl::ClassManager::registerClass<WiimoteDevice::JsClass> ("InputDevice");

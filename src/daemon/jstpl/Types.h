@@ -16,8 +16,8 @@
  *
  */
 
-#ifndef JS_HELPERS_TYPE_CONVERSION_H
-#define JS_HELPERS_TYPE_CONVERSION_H
+#ifndef JSTPL_TYPE_CONVERSION_H
+#define JSTPL_TYPE_CONVERSION_H
 
 #include <jsapi.h>
 #include <string>
@@ -30,7 +30,7 @@
 
 #include "../Log.h"
 
-namespace JsHelpers
+namespace jstpl
 {
 
 template <typename T>
@@ -232,9 +232,9 @@ void readJSValue (JSContext *cx, T *&var, JS::HandleValue value);
 
 }
 
-#include "../ClassManager.h"
+#include "ClassManager.h"
 
-namespace JsHelpers
+namespace jstpl
 {
 template <typename T, typename = std::enable_if_t<is_detected_exact_v<const JSClass, is_js_class_t, T>>>
 inline void readJSValue (JSContext *cx, T *&var, JS::HandleValue value)

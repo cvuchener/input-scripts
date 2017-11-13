@@ -18,8 +18,6 @@
 
 #include "HIDPP10Device.h"
 
-#include "../ClassManager.h"
-
 #include <hidpp10/defs.h>
 #include <hidpp10/DeviceInfo.h>
 #include <hidpp10/IIndividualFeatures.h>
@@ -160,16 +158,16 @@ void HIDPP10Device::setCurrentResolution (const std::vector<unsigned int> &dpi)
 	}
 }
 
-const JSClass HIDPP10Device::js_class = JsHelpers::make_class<HIDPP10Device> ("HIDPP10Device");
+const JSClass HIDPP10Device::js_class = jstpl::make_class<HIDPP10Device> ("HIDPP10Device");
 
 const JSFunctionSpec HIDPP10Device::js_fs[] = {
-	JsHelpers::make_method<&HIDPP10Device::getEventDevices> ("getEventDevices"),
-	JsHelpers::make_method<&HIDPP10Device::setRegister> ("setRegister"),
-	JsHelpers::make_method<&HIDPP10Device::getRegister> ("getRegister"),
-	JsHelpers::make_method<&HIDPP10Device::getIndividualFeatureFlags> ("getIndividualFeatureFlags"),
-	JsHelpers::make_method<&HIDPP10Device::setIndividualFeatureFlags> ("setIndividualFeatureFlags"),
-	JsHelpers::make_method<&HIDPP10Device::getCurrentResolution> ("getCurrentResolution"),
-	JsHelpers::make_method<&HIDPP10Device::setCurrentResolution> ("setCurrentResolution"),
+	jstpl::make_method<&HIDPP10Device::getEventDevices> ("getEventDevices"),
+	jstpl::make_method<&HIDPP10Device::setRegister> ("setRegister"),
+	jstpl::make_method<&HIDPP10Device::getRegister> ("getRegister"),
+	jstpl::make_method<&HIDPP10Device::getIndividualFeatureFlags> ("getIndividualFeatureFlags"),
+	jstpl::make_method<&HIDPP10Device::setIndividualFeatureFlags> ("setIndividualFeatureFlags"),
+	jstpl::make_method<&HIDPP10Device::getCurrentResolution> ("getCurrentResolution"),
+	jstpl::make_method<&HIDPP10Device::setCurrentResolution> ("setCurrentResolution"),
 	JS_FS_END
 };
 
@@ -214,9 +212,9 @@ const std::pair<std::string, int> HIDPP10Device::js_int_const[] = {
 	{ "", 0 }
 };
 
-JSObject *HIDPP10Device::makeJsObject (const JsHelpers::Thread *thread)
+JSObject *HIDPP10Device::makeJsObject (const jstpl::Thread *thread)
 {
 	return thread->makeJsObject (this);
 }
 
-bool HIDPP10Device::_registered = ClassManager::registerClass<HIDPP10Device::JsClass> ("InputDevice");
+bool HIDPP10Device::_registered = jstpl::ClassManager::registerClass<HIDPP10Device::JsClass> ("InputDevice");

@@ -20,12 +20,14 @@
 
 #include <stack>
 
-std::map<std::string, std::unique_ptr<JsHelpers::BaseClass>> ClassManager::initClasses (JSContext *cx, JS::HandleObject obj)
+using namespace jstpl;
+
+std::map<std::string, std::unique_ptr<BaseClass>> ClassManager::initClasses (JSContext *cx, JS::HandleObject obj)
 {
 	if (_inheritance_trees.empty ())
 		buildInheritanceTrees ();
 
-	std::map<std::string, std::unique_ptr<JsHelpers::BaseClass>> classes;
+	std::map<std::string, std::unique_ptr<BaseClass>> classes;
 	std::stack<ClassData::Node *> s;
 	for (auto node: _inheritance_trees)
 		s.push (node);

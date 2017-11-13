@@ -60,9 +60,9 @@ public:
 	static const JSClass js_class;
 	static const JSFunctionSpec js_fs[];
 	static const std::pair<std::string, int> js_int_const[];
-	typedef JsHelpers::AbstractClass<HIDPP10Device> JsClass;
+	typedef jstpl::AbstractClass<HIDPP10Device> JsClass;
 
-	virtual JSObject *makeJsObject (const JsHelpers::Thread *thread);
+	virtual JSObject *makeJsObject (const jstpl::Thread *thread);
 
 private:
 	bool eventHandler (const HIDPP::Report &report);

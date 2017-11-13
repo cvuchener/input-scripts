@@ -16,8 +16,8 @@
  *
  */
 
-#ifndef JS_HELPERS_CLASS_H
-#define JS_HELPERS_CLASS_H
+#ifndef JSTPL_CLASS_H
+#define JSTPL_CLASS_H
 
 #include "Functions.h"
 
@@ -45,7 +45,7 @@ template<typename T> \
 std::enable_if_t<!is_detected_exact_v<expected, has_##name##_member_t, T>, expected *> \
 static_member_pointer_or_null_##name () { return nullptr; };
 
-namespace JsHelpers
+namespace jstpl
 {
 
 using IntConstantSpec = std::pair<std::string, int>;

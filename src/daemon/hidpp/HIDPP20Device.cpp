@@ -18,8 +18,6 @@
 
 #include "HIDPP20Device.h"
 
-#include "../ClassManager.h"
-
 #include <hidpp20/IFeatureSet.h>
 #include <hidpp20/IMouseButtonSpy.h>
 #include <hidpp20/IOnboardProfiles.h>
@@ -483,13 +481,13 @@ void HIDPP20Device::ReprogControlsV4_SetRawXYDivert (uint16_t control_id, bool d
 	_rc4->i.setControlReporting (control_id, flags, 0);
 }
 
-const JSClass HIDPP20Device::js_class = JsHelpers::make_class<HIDPP20Device> ("HIDPP20Device");
+const JSClass HIDPP20Device::js_class = jstpl::make_class<HIDPP20Device> ("HIDPP20Device");
 
-#define HIDPP_JS_WRAPPER(interface_name, method_name) JsHelpers::make_method<&HIDPP20Device::interface_name##_##method_name> (#interface_name "_" #method_name)
+#define HIDPP_JS_WRAPPER(interface_name, method_name) jstpl::make_method<&HIDPP20Device::interface_name##_##method_name> (#interface_name "_" #method_name)
 const JSFunctionSpec HIDPP20Device::js_fs[] = {
-	JsHelpers::make_method<&HIDPP20Device::hasFeature> ("hasFeature"),
-	JsHelpers::make_method<&HIDPP20Device::callFunction> ("callFunction"),
-	JsHelpers::make_method<&HIDPP20Device::sendRawEvents> ("sendRawEvents"),
+	jstpl::make_method<&HIDPP20Device::hasFeature> ("hasFeature"),
+	jstpl::make_method<&HIDPP20Device::callFunction> ("callFunction"),
+	jstpl::make_method<&HIDPP20Device::sendRawEvents> ("sendRawEvents"),
 	HIDPP_JS_WRAPPER(MouseButtonSpy, GetButtonCount),
 	HIDPP_JS_WRAPPER(MouseButtonSpy, Start),
 	HIDPP_JS_WRAPPER(MouseButtonSpy, Stop),
@@ -532,9 +530,9 @@ const std::pair<std::string, int> HIDPP20Device::js_int_const[] = {
 	{ "", 0 }
 };
 
-JSObject *HIDPP20Device::makeJsObject (const JsHelpers::Thread *thread)
+JSObject *HIDPP20Device::makeJsObject (const jstpl::Thread *thread)
 {
 	return thread->makeJsObject (this);
 }
 
-bool HIDPP20Device::_registered = ClassManager::registerClass<HIDPP20Device::JsClass> ("InputDevice");
+bool HIDPP20Device::_registered = jstpl::ClassManager::registerClass<HIDPP20Device::JsClass> ("InputDevice");

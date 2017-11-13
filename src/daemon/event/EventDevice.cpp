@@ -18,8 +18,6 @@
 
 #include "EventDevice.h"
 
-#include "../ClassManager.h"
-
 #include <iostream>
 
 extern "C" {
@@ -183,16 +181,16 @@ int32_t EventDevice::getSimpleEvent (uint16_t type, uint16_t code)
 	return value;
 }
 
-const JSClass EventDevice::js_class = JsHelpers::make_class<EventDevice> ("EventDevice");
+const JSClass EventDevice::js_class = jstpl::make_class<EventDevice> ("EventDevice");
 
 const JSFunctionSpec EventDevice::js_fs[] = {
-	JsHelpers::make_method<&EventDevice::grab> ("grab"),
+	jstpl::make_method<&EventDevice::grab> ("grab"),
 	JS_FS_END
 };
 
-JSObject *EventDevice::makeJsObject (const JsHelpers::Thread *thread)
+JSObject *EventDevice::makeJsObject (const jstpl::Thread *thread)
 {
 	return thread->makeJsObject (this);
 }
 
-bool EventDevice::_registered = ClassManager::registerClass<EventDevice::JsClass> ("InputDevice");
+bool EventDevice::_registered = jstpl::ClassManager::registerClass<EventDevice::JsClass> ("InputDevice");

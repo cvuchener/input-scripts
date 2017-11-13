@@ -22,7 +22,7 @@
 #include <cstdint>
 #include <functional>
 
-#include "JsHelpers/JsHelpers.h"
+#include "jstpl/jstpl.h"
 
 /**
  * This is the base class for every input device class used by drivers.
@@ -108,8 +108,8 @@ public:
 
 	static const JSClass js_class;
 	static const JSFunctionSpec js_fs[];
-	static const JsHelpers::SignalMap js_signals;
-	typedef JsHelpers::AbstractClass<InputDevice> JsClass;
+	static const jstpl::SignalMap js_signals;
+	typedef jstpl::AbstractClass<InputDevice> JsClass;
 
 	/**
 	 * Create a JS object from this device.
@@ -117,7 +117,7 @@ public:
 	 * \param cx JS context
 	 * \param obj Global object where the class is created.
 	 */
-	virtual JSObject *makeJsObject (const JsHelpers::Thread *) = 0;
+	virtual JSObject *makeJsObject (const jstpl::Thread *) = 0;
 
 protected:
 	void eventRead (const Event &);

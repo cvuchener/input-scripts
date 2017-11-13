@@ -19,7 +19,7 @@
 #ifndef SCRIPT_H
 #define SCRIPT_H
 
-#include "JsHelpers/Thread.h"
+#include "jstpl/Thread.h"
 #include "dbus/ScriptInterfaceAdaptor.h"
 
 #include <string>
@@ -27,7 +27,7 @@
 
 
 class Script:
-	public JsHelpers::Thread,
+	public jstpl::Thread,
 	public com::github::cvuchener::InputScripts::Script_adaptor,
 	public DBus::IntrospectableAdaptor,
 	public DBus::PropertiesAdaptor,

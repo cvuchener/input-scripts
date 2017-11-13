@@ -16,8 +16,8 @@
  *
  */
 
-#ifndef CLASS_MANAGER_H
-#define CLASS_MANAGER_H
+#ifndef JSTPL_CLASS_MANAGER_H
+#define JSTPL_CLASS_MANAGER_H
 
 #include <jsapi.h>
 #include <map>
@@ -26,7 +26,10 @@
 #include <memory>
 #include <functional>
 
-namespace JsHelpers { class BaseClass; }
+namespace jstpl
+{
+
+class BaseClass;
 
 class ClassManager
 {
@@ -34,15 +37,15 @@ public:
 	template<typename Class>
 	static bool registerClass (const std::string &parent = std::string ());
 
-	static std::map<std::string, std::unique_ptr<JsHelpers::BaseClass>> initClasses (JSContext *cx, JS::HandleObject obj);
+	static std::map<std::string, std::unique_ptr<BaseClass>> initClasses (JSContext *cx, JS::HandleObject obj);
 
 	static bool inherits (const std::string &cls, const std::string &parent);
 
 private:
-	typedef std::unique_ptr<JsHelpers::BaseClass> Factory (JSContext *, JS::HandleObject, const JsHelpers::BaseClass *);
+	typedef std::unique_ptr<BaseClass> Factory (JSContext *, JS::HandleObject, const BaseClass *);
 
 	template<typename Class>
-	static std::unique_ptr<JsHelpers::BaseClass> classFactory (JSContext *cx, JS::HandleObject obj, const JsHelpers::BaseClass *parent);
+	static std::unique_ptr<BaseClass> classFactory (JSContext *cx, JS::HandleObject obj, const BaseClass *parent);
 
 	struct ClassData {
 		std::string parent_name;
@@ -68,7 +71,12 @@ private:
 	static std::vector<ClassData::Node *> _inheritance_trees;
 };
 
-#include "JsHelpers/Class.h"
+}
+
+#include "Class.h"
+
+namespace jstpl
+{
 
 template<typename Class>
 bool ClassManager::registerClass (const std::string &parent)
@@ -80,9 +88,11 @@ bool ClassManager::registerClass (const std::string &parent)
 }
 
 template<typename Class>
-std::unique_ptr<JsHelpers::BaseClass> ClassManager::classFactory (JSContext *cx, JS::HandleObject obj, const JsHelpers::BaseClass *parent)
+std::unique_ptr<BaseClass> ClassManager::classFactory (JSContext *cx, JS::HandleObject obj, const BaseClass *parent)
 {
 	return std::make_unique<Class> (cx, obj, parent);
+}
+
 }
 
 #endif

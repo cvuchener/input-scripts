@@ -18,8 +18,6 @@
 
 #include "EventFilter.h"
 
-#include "../JsHelpers/Signal.h"
-
 EventFilter::EventFilter (InputDevice *input):
 	_input (input),
 	_simple_only (false),
@@ -165,29 +163,29 @@ void EventFilter::processSimpleEvent (uint16_t type, uint16_t code, int32_t valu
 		simpleEvent.emit (type, code, value);
 }
 
-const JSClass EventFilter::js_class = JsHelpers::make_class<EventFilter> ("EventFilter");
+const JSClass EventFilter::js_class = jstpl::make_class<EventFilter> ("EventFilter");
 
 const JSFunctionSpec EventFilter::js_fs[] = {
-	JsHelpers::make_method<&EventFilter::addMatchType> ("addMatchType"),
-	JsHelpers::make_method<&EventFilter::addMatchCode> ("addMatchCode"),
-	JsHelpers::make_method<&EventFilter::addMatchCodeRange> ("addMatchCodeRange"),
-	JsHelpers::make_method<&EventFilter::addMatchProp> ("addMatchProp"),
-	JsHelpers::make_method<&EventFilter::addMatchPropRange> ("addMatchPropRange"),
-	JsHelpers::make_method<&EventFilter::connect> ("connect"),
-	JsHelpers::make_method<&EventFilter::disconnect> ("disconnect"),
+	jstpl::make_method<&EventFilter::addMatchType> ("addMatchType"),
+	jstpl::make_method<&EventFilter::addMatchCode> ("addMatchCode"),
+	jstpl::make_method<&EventFilter::addMatchCodeRange> ("addMatchCodeRange"),
+	jstpl::make_method<&EventFilter::addMatchProp> ("addMatchProp"),
+	jstpl::make_method<&EventFilter::addMatchPropRange> ("addMatchPropRange"),
+	jstpl::make_method<&EventFilter::connect> ("connect"),
+	jstpl::make_method<&EventFilter::disconnect> ("disconnect"),
 	JS_FS_END
 };
 
 const JSPropertySpec EventFilter::js_ps[] = {
-	JsHelpers::make_property<&EventFilter::simpleOnly, &EventFilter::setSimpleOnly> ("simple_only"),
-	JsHelpers::make_property<&EventFilter::inverted, &EventFilter::setInverted> ("inverted"),
+	jstpl::make_property<&EventFilter::simpleOnly, &EventFilter::setSimpleOnly> ("simple_only"),
+	jstpl::make_property<&EventFilter::inverted, &EventFilter::setInverted> ("inverted"),
 	JS_PS_END
 };
 
-const JsHelpers::SignalMap EventFilter::js_signals = {
-	{ "event", JsHelpers::make_signal_connector (&EventFilter::event) },
-	{ "simpleEvent", JsHelpers::make_signal_connector (&EventFilter::simpleEvent) },
+const jstpl::SignalMap EventFilter::js_signals = {
+	{ "event", jstpl::make_signal_connector (&EventFilter::event) },
+	{ "simpleEvent", jstpl::make_signal_connector (&EventFilter::simpleEvent) },
 };
 
-bool EventFilter::_registered = ClassManager::registerClass<EventFilter::JsClass> ();
+bool EventFilter::_registered = jstpl::ClassManager::registerClass<EventFilter::JsClass> ();
 

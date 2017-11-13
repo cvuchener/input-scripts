@@ -2,12 +2,12 @@ cmake_minimum_required(VERSION 3.1)
 
 set(INPUT_SCRIPTS_SOURCES
 	Log.cpp
-	JsHelpers/Thread.cpp
+	jstpl/Thread.cpp
+	jstpl/ClassManager.cpp
 	Udev.cpp
 	ScriptManager.cpp
 	Script.cpp
 	System.cpp
-	ClassManager.cpp
 	classes/UInput.cpp
 	classes/DBusProxy.cpp
 	classes/Remapper.cpp

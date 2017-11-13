@@ -16,15 +16,15 @@
  *
  */
 
-#ifndef JS_HELPERS_SIGNAL_H
-#define JS_HELPERS_SIGNAL_H
+#ifndef JSTPL_SIGNAL_H
+#define JSTPL_SIGNAL_H
 
 #include <sigc++/signal.h>
 
 #include "Types.h"
 #include "Class.h"
 
-namespace JsHelpers
+namespace jstpl
 {
 
 template<typename T, typename Ret, typename... Args>

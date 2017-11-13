@@ -18,9 +18,6 @@
 
 #include "InputDevice.h"
 
-#include "ClassManager.h"
-#include "JsHelpers/Signal.h"
-
 extern "C" {
 #include <linux/input.h>
 }
@@ -60,19 +57,19 @@ void InputDevice::simpleEventRead (uint16_t type, uint16_t code, int32_t value)
 	});
 }
 
-const JSClass InputDevice::js_class = JsHelpers::make_class<InputDevice> ("InputDevice");
+const JSClass InputDevice::js_class = jstpl::make_class<InputDevice> ("InputDevice");
 
 const JSFunctionSpec InputDevice::js_fs[] = {
-	JsHelpers::make_method<&InputDevice::getEvent> ("getEvent"),
-	JsHelpers::make_method<&InputDevice::getSimpleEvent> ("getSimpleEvent"),
-	JsHelpers::make_method<&InputDevice::keyPressed> ("keyPressed"),
-	JsHelpers::make_method<&InputDevice::getAxisValue> ("getAxisValue"),
+	jstpl::make_method<&InputDevice::getEvent> ("getEvent"),
+	jstpl::make_method<&InputDevice::getSimpleEvent> ("getSimpleEvent"),
+	jstpl::make_method<&InputDevice::keyPressed> ("keyPressed"),
+	jstpl::make_method<&InputDevice::getAxisValue> ("getAxisValue"),
 	JS_FS_END
 };
 
-const JsHelpers::SignalMap InputDevice::js_signals = {
-	{ "event", JsHelpers::make_signal_connector (&InputDevice::event) },
-	{ "simpleEvent", JsHelpers::make_signal_connector (&InputDevice::simpleEvent) },
+const jstpl::SignalMap InputDevice::js_signals = {
+	{ "event", jstpl::make_signal_connector (&InputDevice::event) },
+	{ "simpleEvent", jstpl::make_signal_connector (&InputDevice::simpleEvent) },
 };
 
-bool InputDevice::_registered = ClassManager::registerClass<InputDevice::JsClass> ();
+bool InputDevice::_registered = jstpl::ClassManager::registerClass<InputDevice::JsClass> ();

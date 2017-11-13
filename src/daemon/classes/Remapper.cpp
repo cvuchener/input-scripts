@@ -104,20 +104,20 @@ void Remapper::mapped_event::reset ()
 	_parent->uinput ()->sendEvent (_event.type, _event.code, _default_value);
 }
 
-const JSClass Remapper::mapped_event::js_class = JsHelpers::make_class<Remapper::mapped_event> ("RemapperEvent");
+const JSClass Remapper::mapped_event::js_class = jstpl::make_class<Remapper::mapped_event> ("RemapperEvent");
 
 const JSFunctionSpec Remapper::mapped_event::js_fs[] = {
-	JsHelpers::make_method<&Remapper::mapped_event::setEvent> ("setEvent"),
-	JsHelpers::make_method<&Remapper::mapped_event::setCode> ("setCode"),
-	JsHelpers::make_method<&Remapper::mapped_event::addModifier> ("addModifier"),
-	JsHelpers::make_method<&Remapper::mapped_event::addModifierMin> ("addModifierMin"),
-	JsHelpers::make_method<&Remapper::mapped_event::addModifierMax> ("addModifierMax"),
-	JsHelpers::make_method<&Remapper::mapped_event::setTransform> ("setTransform"),
-	JsHelpers::make_method<&Remapper::mapped_event::setDefaultValue> ("setDefaultValue"),
+	jstpl::make_method<&Remapper::mapped_event::setEvent> ("setEvent"),
+	jstpl::make_method<&Remapper::mapped_event::setCode> ("setCode"),
+	jstpl::make_method<&Remapper::mapped_event::addModifier> ("addModifier"),
+	jstpl::make_method<&Remapper::mapped_event::addModifierMin> ("addModifierMin"),
+	jstpl::make_method<&Remapper::mapped_event::addModifierMax> ("addModifierMax"),
+	jstpl::make_method<&Remapper::mapped_event::setTransform> ("setTransform"),
+	jstpl::make_method<&Remapper::mapped_event::setDefaultValue> ("setDefaultValue"),
 	JS_FS_END
 };
 
-bool Remapper::mapped_event::_registered = ClassManager::registerClass<Remapper::mapped_event::JsClass> ();
+bool Remapper::mapped_event::_registered = jstpl::ClassManager::registerClass<Remapper::mapped_event::JsClass> ();
 
 Remapper::Remapper (InputDevice *device, UInput *uinput):
 	_device (device),
@@ -183,13 +183,13 @@ void Remapper::event (uint16_t code, uint16_t type, int32_t value)
 	}
 }
 
-const JSClass Remapper::js_class = JsHelpers::make_class<Remapper> ("Remapper");
+const JSClass Remapper::js_class = jstpl::make_class<Remapper> ("Remapper");
 
 const JSFunctionSpec Remapper::js_fs[] = {
-	JsHelpers::make_method<&Remapper::addEvent> ("addEvent"),
-	JsHelpers::make_method<&Remapper::connect> ("connect"),
-	JsHelpers::make_method<&Remapper::disconnect> ("disconnect"),
+	jstpl::make_method<&Remapper::addEvent> ("addEvent"),
+	jstpl::make_method<&Remapper::connect> ("connect"),
+	jstpl::make_method<&Remapper::disconnect> ("disconnect"),
 	JS_FS_END
 };
 
-bool Remapper::_registered = ClassManager::registerClass<Remapper::JsClass> ();
+bool Remapper::_registered = jstpl::ClassManager::registerClass<Remapper::JsClass> ();

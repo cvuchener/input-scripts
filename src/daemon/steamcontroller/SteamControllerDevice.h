@@ -294,9 +294,9 @@ public:
 	static const char *js_name;
 	static const JSFunctionSpec js_fs[];
 	static const std::pair<std::string, int> js_int_const[];
-	typedef JsHelpers::AbstractClass<SteamControllerDevice> JsClass;
+	typedef jstpl::AbstractClass<SteamControllerDevice> JsClass;
 
-	JSObject *makeJsObject (const JsHelpers::Thread *thread) override;
+	JSObject *makeJsObject (const jstpl::Thread *thread) override;
 
 private:
 	void readEvent (const std::array<uint8_t, 64> &report);

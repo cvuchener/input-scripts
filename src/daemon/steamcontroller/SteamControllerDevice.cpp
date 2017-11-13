@@ -23,7 +23,6 @@
 #include "SteamControllerProtocol.h"
 using namespace SteamController;
 
-#include "../ClassManager.h"
 #include "../Log.h"
 
 extern "C" {
@@ -394,22 +393,22 @@ void SteamControllerDevice::calibrateJoystick ()
 	_receiver->sendRequest (RequestCalibrateJoystick, {});
 }
 
-const JSClass SteamControllerDevice::js_class = JsHelpers::make_class<SteamControllerDevice> ("SteamControllerDevice");
+const JSClass SteamControllerDevice::js_class = jstpl::make_class<SteamControllerDevice> ("SteamControllerDevice");
 
 const JSFunctionSpec SteamControllerDevice::js_fs[] = {
-	JsHelpers::make_method<&SteamControllerDevice::setTouchPadEventMode> ("setTouchPadEventMode"),
-	JsHelpers::make_method<&SteamControllerDevice::setSetting> ("setSetting"),
-	JsHelpers::make_method<&SteamControllerDevice::enableKeys> ("enableKeys"),
-	JsHelpers::make_method<&SteamControllerDevice::disableKeys> ("disableKeys"),
-	JsHelpers::make_method<&SteamControllerDevice::enableMouse> ("enableMouse"),
-	JsHelpers::make_method<&SteamControllerDevice::hapticFeedback> ("hapticFeedback"),
-	JsHelpers::make_method<&SteamControllerDevice::setSounds> ("setSounds"),
-	JsHelpers::make_method<&SteamControllerDevice::playSound> ("playSound"),
-	JsHelpers::make_method<&SteamControllerDevice::reset> ("reset"),
-	JsHelpers::make_method<&SteamControllerDevice::shutdown> ("shutdown"),
-	JsHelpers::make_method<&SteamControllerDevice::calibrateTouchPads> ("calibrateTouchPads"),
-	JsHelpers::make_method<&SteamControllerDevice::calibrateSensors> ("calibrateSensors"),
-	JsHelpers::make_method<&SteamControllerDevice::calibrateJoystick> ("calibrateJoystick"),
+	jstpl::make_method<&SteamControllerDevice::setTouchPadEventMode> ("setTouchPadEventMode"),
+	jstpl::make_method<&SteamControllerDevice::setSetting> ("setSetting"),
+	jstpl::make_method<&SteamControllerDevice::enableKeys> ("enableKeys"),
+	jstpl::make_method<&SteamControllerDevice::disableKeys> ("disableKeys"),
+	jstpl::make_method<&SteamControllerDevice::enableMouse> ("enableMouse"),
+	jstpl::make_method<&SteamControllerDevice::hapticFeedback> ("hapticFeedback"),
+	jstpl::make_method<&SteamControllerDevice::setSounds> ("setSounds"),
+	jstpl::make_method<&SteamControllerDevice::playSound> ("playSound"),
+	jstpl::make_method<&SteamControllerDevice::reset> ("reset"),
+	jstpl::make_method<&SteamControllerDevice::shutdown> ("shutdown"),
+	jstpl::make_method<&SteamControllerDevice::calibrateTouchPads> ("calibrateTouchPads"),
+	jstpl::make_method<&SteamControllerDevice::calibrateSensors> ("calibrateSensors"),
+	jstpl::make_method<&SteamControllerDevice::calibrateJoystick> ("calibrateJoystick"),
 	JS_FS_END
 };
 
@@ -473,9 +472,9 @@ const std::pair<std::string, int> SteamControllerDevice::js_int_const[] = {
 	{ "", 0 }
 };
 
-JSObject *SteamControllerDevice::makeJsObject (const JsHelpers::Thread *thread)
+JSObject *SteamControllerDevice::makeJsObject (const jstpl::Thread *thread)
 {
 	return thread->makeJsObject (this);
 }
 
-bool SteamControllerDevice::_registered = ClassManager::registerClass<SteamControllerDevice::JsClass> ("InputDevice");
+bool SteamControllerDevice::_registered = jstpl::ClassManager::registerClass<SteamControllerDevice::JsClass> ("InputDevice");

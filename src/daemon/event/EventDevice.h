@@ -64,9 +64,9 @@ public:
 
 	static const JSClass js_class;
 	static const JSFunctionSpec js_fs[];
-	typedef JsHelpers::AbstractClass<EventDevice> JsClass;
+	typedef jstpl::AbstractClass<EventDevice> JsClass;
 
-	JSObject *makeJsObject (const JsHelpers::Thread *thread) override;
+	JSObject *makeJsObject (const jstpl::Thread *thread) override;
 
 private:
 	void readEvents ();

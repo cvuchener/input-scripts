@@ -19,7 +19,7 @@
 #include "System.h"
 
 #include "Log.h"
-#include "JsHelpers/Thread.h"
+#include "jstpl/Thread.h"
 
 extern "C" {
 #include <unistd.h>
@@ -27,7 +27,7 @@ extern "C" {
 #include <sys/wait.h>
 }
 
-System::System (JsHelpers::Thread *js_thread):
+System::System (jstpl::Thread *js_thread):
 	_js_thread (js_thread)
 {
 }
@@ -224,19 +224,19 @@ bool System::print_r (JSContext *cx, JS::CallArgs &args)
 	return true;
 }
 
-const JSClass System::js_class = JsHelpers::make_class<System> ("System");
+const JSClass System::js_class = jstpl::make_class<System> ("System");
 
 const JSFunctionSpec System::js_fs[] = {
-	JsHelpers::make_method<&System::setTimeout> ("setTimeout"),
-	JsHelpers::make_method<&System::exec> ("exec"),
+	jstpl::make_method<&System::setTimeout> ("setTimeout"),
+	jstpl::make_method<&System::exec> ("exec"),
 	{
 		"print",
-		&JsHelpers::LLMethodWrapper<System, &System::print>,
+		&jstpl::LLMethodWrapper<System, &System::print>,
 		0, 0
 	},
 	{
 		"print_r",
-		&JsHelpers::LLMethodWrapper<System, &System::print_r>,
+		&jstpl::LLMethodWrapper<System, &System::print_r>,
 		0, 0
 	},
 	JS_FS_END

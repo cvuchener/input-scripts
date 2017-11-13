@@ -20,7 +20,7 @@
 #define EVENT_FILTER_H
 
 #include "../InputDevice.h"
-#include "../JsHelpers/JsHelpers.h"
+#include "../jstpl/jstpl.h"
 
 #include <map>
 #include <variant>
@@ -107,8 +107,8 @@ public:
 	static const JSClass js_class;
 	static const JSFunctionSpec js_fs[];
 	static const JSPropertySpec js_ps[];
-	static const JsHelpers::SignalMap js_signals;
-	using JsClass = JsHelpers::Class<EventFilter, InputDevice *>;
+	static const jstpl::SignalMap js_signals;
+	using JsClass = jstpl::Class<EventFilter, InputDevice *>;
 
 private:
 	bool testEvent (const InputDevice::Event &event);

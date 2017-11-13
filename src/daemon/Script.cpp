@@ -26,8 +26,6 @@
 #include "Log.h"
 #include "Config.h"
 
-#include "ClassManager.h"
-
 #include "System.h"
 
 extern "C" {
@@ -120,7 +118,7 @@ static bool importJSScript (JSContext *cx, unsigned int argc, JS::Value *vp)
 	JS::CallArgs jsargs = JS::CallArgsFromVp (argc, vp);
 	std::string filename;
 	try {
-		JsHelpers::readJSValue (cx, filename, jsargs.get (0));
+		jstpl::readJSValue (cx, filename, jsargs.get (0));
 	}
 	catch (std::invalid_argument &e) {
 		JS_ReportError (cx, "Invalid argument: %s", e.what ());
@@ -161,7 +159,7 @@ bool Script::connectSignal (JSContext *cx, unsigned int argc, JS::Value *vp)
 
 	std::string signal_name;
 	try {
-		JsHelpers::readJSValue (cx, signal_name, jsargs.get (1));
+		jstpl::readJSValue (cx, signal_name, jsargs.get (1));
 	}
 	catch (std::exception &e) {
 		JS_ReportError (cx, "Invalid argument 1: %s", e.what ());
@@ -175,7 +173,7 @@ bool Script::connectSignal (JSContext *cx, unsigned int argc, JS::Value *vp)
 		       it->first == _next_signal_connection_index)
 			++it, ++_next_signal_connection_index;
 		_signal_connections.emplace_hint (it, _next_signal_connection_index, c);
-		JsHelpers::setJSValue (cx, jsargs.rval (), _next_signal_connection_index);
+		jstpl::setJSValue (cx, jsargs.rval (), _next_signal_connection_index);
 		++_next_signal_connection_index;
 	}
 	catch (std::exception &e) {
@@ -196,7 +194,7 @@ bool Script::disconnectSignal (JSContext *cx, unsigned int argc, JS::Value *vp)
 
 	try {
 		int index;
-		JsHelpers::readJSValue (cx, index, jsargs.get (0));
+		jstpl::readJSValue (cx, index, jsargs.get (0));
 		auto it = _signal_connections.find (index);
 		if (it == _signal_connections.end ()) {
 			JS_ReportError (cx, "Signal index not found");
@@ -238,7 +236,7 @@ void Script::run (JSContext *cx)
 	JS_DefineFunction (cx, global, "disconnect", disconnectSignalWrapper, 3, JSPROP_READONLY | JSPROP_PERMANENT);
 
 	// C++ classes
-	addClasses (ClassManager::initClasses (cx, global));
+	addClasses (jstpl::ClassManager::initClasses (cx, global));
 
 	// System object
 	System system (this);

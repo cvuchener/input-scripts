@@ -28,7 +28,7 @@
 #include "Log.h"
 #include "Config.h"
 #include "DBusConnections.h"
-#include "JsHelpers/Thread.h"
+#include "jstpl/Thread.h"
 
 extern "C" {
 #include <unistd.h>
@@ -124,7 +124,7 @@ int main (int argc, char *argv[])
 	Log::setLevel (log_level);
 	Config::config.loadConfig (config_file);
 
-	JsHelpers::Thread::init ();
+	jstpl::Thread::init ();
 
 	DBus::_init_threading();
 	DBus::default_dispatcher = &dispatcher;
@@ -146,6 +146,6 @@ int main (int argc, char *argv[])
 		udev_thread.join ();
 	}
 
-	JsHelpers::Thread::shutdown ();
+	jstpl::Thread::shutdown ();
 	return 0;
 }

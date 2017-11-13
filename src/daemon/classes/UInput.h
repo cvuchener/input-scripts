@@ -22,7 +22,7 @@
 #include <cstdint>
 #include <thread>
 #include <map>
-#include "../JsHelpers/JsHelpers.h"
+#include "../jstpl/jstpl.h"
 
 extern "C" {
 #include <linux/uinput.h>
@@ -71,7 +71,7 @@ public:
 	static const JSFunctionSpec js_fs[];
 	static const JSPropertySpec js_ps[];
 
-	typedef JsHelpers::Class<UInput> JsClass;
+	typedef jstpl::Class<UInput> JsClass;
 
 private:
 	void readEvents ();
