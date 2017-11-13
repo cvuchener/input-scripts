@@ -160,16 +160,16 @@ void HIDPP10Device::setCurrentResolution (const std::vector<unsigned int> &dpi)
 	}
 }
 
-const JSClass HIDPP10Device::js_class = JS_HELPERS_CLASS("HIDPP10Device", HIDPP10Device);
+const JSClass HIDPP10Device::js_class = JsHelpers::make_class<HIDPP10Device> ("HIDPP10Device");
 
 const JSFunctionSpec HIDPP10Device::js_fs[] = {
-	JS_HELPERS_METHOD("getEventDevices", HIDPP10Device::getEventDevices),
-	JS_HELPERS_METHOD("setRegister", HIDPP10Device::setRegister),
-	JS_HELPERS_METHOD("getRegister", HIDPP10Device::getRegister),
-	JS_HELPERS_METHOD("getIndividualFeatureFlags", HIDPP10Device::getIndividualFeatureFlags),
-	JS_HELPERS_METHOD("setIndividualFeatureFlags", HIDPP10Device::setIndividualFeatureFlags),
-	JS_HELPERS_METHOD("getCurrentResolution", HIDPP10Device::getCurrentResolution),
-	JS_HELPERS_METHOD("setCurrentResolution", HIDPP10Device::setCurrentResolution),
+	JsHelpers::make_method<&HIDPP10Device::getEventDevices> ("getEventDevices"),
+	JsHelpers::make_method<&HIDPP10Device::setRegister> ("setRegister"),
+	JsHelpers::make_method<&HIDPP10Device::getRegister> ("getRegister"),
+	JsHelpers::make_method<&HIDPP10Device::getIndividualFeatureFlags> ("getIndividualFeatureFlags"),
+	JsHelpers::make_method<&HIDPP10Device::setIndividualFeatureFlags> ("setIndividualFeatureFlags"),
+	JsHelpers::make_method<&HIDPP10Device::getCurrentResolution> ("getCurrentResolution"),
+	JsHelpers::make_method<&HIDPP10Device::setCurrentResolution> ("setCurrentResolution"),
 	JS_FS_END
 };
 

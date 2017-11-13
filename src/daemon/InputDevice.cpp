@@ -60,13 +60,13 @@ void InputDevice::simpleEventRead (uint16_t type, uint16_t code, int32_t value)
 	});
 }
 
-const JSClass InputDevice::js_class = JS_HELPERS_CLASS("InputDevice", InputDevice);
+const JSClass InputDevice::js_class = JsHelpers::make_class<InputDevice> ("InputDevice");
 
 const JSFunctionSpec InputDevice::js_fs[] = {
-	JS_HELPERS_METHOD("getEvent", InputDevice::getEvent),
-	JS_HELPERS_METHOD("getSimpleEvent", InputDevice::getSimpleEvent),
-	JS_HELPERS_METHOD("keyPressed", InputDevice::keyPressed),
-	JS_HELPERS_METHOD("getAxisValue", InputDevice::getAxisValue),
+	JsHelpers::make_method<&InputDevice::getEvent> ("getEvent"),
+	JsHelpers::make_method<&InputDevice::getSimpleEvent> ("getSimpleEvent"),
+	JsHelpers::make_method<&InputDevice::keyPressed> ("keyPressed"),
+	JsHelpers::make_method<&InputDevice::getAxisValue> ("getAxisValue"),
 	JS_FS_END
 };
 

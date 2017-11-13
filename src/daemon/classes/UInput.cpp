@@ -362,35 +362,35 @@ void UInput::readEvents ()
 	}
 }
 
-const JSClass UInput::js_class = JS_HELPERS_CLASS("UInput", UInput);
+const JSClass UInput::js_class = JsHelpers::make_class<UInput> ("UInput");
 
 const JSFunctionSpec UInput::js_fs[] = {
-	JS_HELPERS_METHOD("create", UInput::create),
-	JS_HELPERS_METHOD("destroy", UInput::destroy),
-	JS_HELPERS_METHOD("setKey", UInput::setKey),
-	JS_HELPERS_METHOD("setAbs", UInput::setAbs),
-	JS_HELPERS_METHOD("setRel", UInput::setRel),
-	JS_HELPERS_METHOD("setFF", UInput::setFF),
-	JS_HELPERS_METHOD("setFFEffectsMax", UInput::setFFEffectsMax),
-	JS_HELPERS_METHOD("sendKey", UInput::sendKey),
-	JS_HELPERS_METHOD("sendAbs", UInput::sendAbs),
-	JS_HELPERS_METHOD("sendRel", UInput::sendRel),
-	JS_HELPERS_METHOD("sendSyn", UInput::sendSyn),
-	JS_HELPERS_METHOD("sendEvent", UInput::sendEvent),
-	JS_HELPERS_METHOD("setFFUploadEffect", UInput::setFFUploadEffect),
-	JS_HELPERS_METHOD("setFFEraseEffect", UInput::setFFEraseEffect),
-	JS_HELPERS_METHOD("setFFStart", UInput::setFFStart),
-	JS_HELPERS_METHOD("setFFStop", UInput::setFFStop),
-	JS_HELPERS_METHOD("setFFSetGain", UInput::setFFSetGain),
+	JsHelpers::make_method<&UInput::create> ("create"),
+	JsHelpers::make_method<&UInput::destroy> ("destroy"),
+	JsHelpers::make_method<&UInput::setKey> ("setKey"),
+	JsHelpers::make_method<&UInput::setAbs> ("setAbs"),
+	JsHelpers::make_method<&UInput::setRel> ("setRel"),
+	JsHelpers::make_method<&UInput::setFF> ("setFF"),
+	JsHelpers::make_method<&UInput::setFFEffectsMax> ("setFFEffectsMax"),
+	JsHelpers::make_method<&UInput::sendKey> ("sendKey"),
+	JsHelpers::make_method<&UInput::sendAbs> ("sendAbs"),
+	JsHelpers::make_method<&UInput::sendRel> ("sendRel"),
+	JsHelpers::make_method<&UInput::sendSyn> ("sendSyn"),
+	JsHelpers::make_method<&UInput::sendEvent> ("sendEvent"),
+	JsHelpers::make_method<&UInput::setFFUploadEffect> ("setFFUploadEffect"),
+	JsHelpers::make_method<&UInput::setFFEraseEffect> ("setFFEraseEffect"),
+	JsHelpers::make_method<&UInput::setFFStart> ("setFFStart"),
+	JsHelpers::make_method<&UInput::setFFStop> ("setFFStop"),
+	JsHelpers::make_method<&UInput::setFFSetGain> ("setFFSetGain"),
 	JS_FS_END
 };
 
 const JSPropertySpec UInput::js_ps[] = {
-	JS_HELPERS_PROPERTY("name", UInput::name, UInput::setName),
-	JS_HELPERS_PROPERTY("busType", UInput::busType, UInput::setBusType),
-	JS_HELPERS_PROPERTY("vendor", UInput::vendor, UInput::setVendor),
-	JS_HELPERS_PROPERTY("product", UInput::product, UInput::setProduct),
-	JS_HELPERS_PROPERTY("version", UInput::version, UInput::setVersion),
+	JsHelpers::make_property<&UInput::name, &UInput::setName> ("name"),
+	JsHelpers::make_property<&UInput::busType, &UInput::setBusType> ("busType"),
+	JsHelpers::make_property<&UInput::vendor, &UInput::setVendor> ("vendor"),
+	JsHelpers::make_property<&UInput::product, &UInput::setProduct> ("product"),
+	JsHelpers::make_property<&UInput::version, &UInput::setVersion> ("version"),
 	JS_PS_END
 };
 

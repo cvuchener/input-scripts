@@ -394,22 +394,22 @@ void SteamControllerDevice::calibrateJoystick ()
 	_receiver->sendRequest (RequestCalibrateJoystick, {});
 }
 
-const JSClass SteamControllerDevice::js_class = JS_HELPERS_CLASS("SteamControllerDevice", SteamControllerDevice);
+const JSClass SteamControllerDevice::js_class = JsHelpers::make_class<SteamControllerDevice> ("SteamControllerDevice");
 
 const JSFunctionSpec SteamControllerDevice::js_fs[] = {
-	JS_HELPERS_METHOD("setTouchPadEventMode", SteamControllerDevice::setTouchPadEventMode),
-	JS_HELPERS_METHOD("setSetting", SteamControllerDevice::setSetting),
-	JS_HELPERS_METHOD("enableKeys", SteamControllerDevice::enableKeys),
-	JS_HELPERS_METHOD("disableKeys", SteamControllerDevice::disableKeys),
-	JS_HELPERS_METHOD("enableMouse", SteamControllerDevice::enableMouse),
-	JS_HELPERS_METHOD("hapticFeedback", SteamControllerDevice::hapticFeedback),
-	JS_HELPERS_METHOD("setSounds", SteamControllerDevice::setSounds),
-	JS_HELPERS_METHOD("playSound", SteamControllerDevice::playSound),
-	JS_HELPERS_METHOD("reset", SteamControllerDevice::reset),
-	JS_HELPERS_METHOD("shutdown", SteamControllerDevice::shutdown),
-	JS_HELPERS_METHOD("calibrateTouchPads", SteamControllerDevice::calibrateTouchPads),
-	JS_HELPERS_METHOD("calibrateSensors", SteamControllerDevice::calibrateSensors),
-	JS_HELPERS_METHOD("calibrateJoystick", SteamControllerDevice::calibrateJoystick),
+	JsHelpers::make_method<&SteamControllerDevice::setTouchPadEventMode> ("setTouchPadEventMode"),
+	JsHelpers::make_method<&SteamControllerDevice::setSetting> ("setSetting"),
+	JsHelpers::make_method<&SteamControllerDevice::enableKeys> ("enableKeys"),
+	JsHelpers::make_method<&SteamControllerDevice::disableKeys> ("disableKeys"),
+	JsHelpers::make_method<&SteamControllerDevice::enableMouse> ("enableMouse"),
+	JsHelpers::make_method<&SteamControllerDevice::hapticFeedback> ("hapticFeedback"),
+	JsHelpers::make_method<&SteamControllerDevice::setSounds> ("setSounds"),
+	JsHelpers::make_method<&SteamControllerDevice::playSound> ("playSound"),
+	JsHelpers::make_method<&SteamControllerDevice::reset> ("reset"),
+	JsHelpers::make_method<&SteamControllerDevice::shutdown> ("shutdown"),
+	JsHelpers::make_method<&SteamControllerDevice::calibrateTouchPads> ("calibrateTouchPads"),
+	JsHelpers::make_method<&SteamControllerDevice::calibrateSensors> ("calibrateSensors"),
+	JsHelpers::make_method<&SteamControllerDevice::calibrateJoystick> ("calibrateJoystick"),
 	JS_FS_END
 };
 

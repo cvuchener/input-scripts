@@ -375,18 +375,18 @@ const std::pair<std::string, int> WiimoteDevice::js_int_const[] = {
 	{ "", 0 }
 };
 
-const JSClass WiimoteDevice::js_class = JS_HELPERS_CLASS("WiimoteDevice", WiimoteDevice);
+const JSClass WiimoteDevice::js_class = JsHelpers::make_class<WiimoteDevice> ("WiimoteDevice");
 
 const JSFunctionSpec WiimoteDevice::js_fs[] = {
-	JS_HELPERS_METHOD("open", WiimoteDevice::open),
-	JS_HELPERS_METHOD("close", WiimoteDevice::close),
-	JS_HELPERS_METHOD("rumble", WiimoteDevice::rumble),
-	JS_HELPERS_METHOD("getLED", WiimoteDevice::getLED),
-	JS_HELPERS_METHOD("setLED", WiimoteDevice::setLED),
-	JS_HELPERS_METHOD("battery", WiimoteDevice::battery),
-	JS_HELPERS_METHOD("extension", WiimoteDevice::extension),
-	JS_HELPERS_METHOD("setMPNormalization", WiimoteDevice::setMPNormalization),
-	//JS_HELPERS_METHOD("getMPNormalization", WiimoteDevice::getMPNormalization),
+	JsHelpers::make_method<&WiimoteDevice::open> ("open"),
+	JsHelpers::make_method<&WiimoteDevice::close> ("close"),
+	JsHelpers::make_method<&WiimoteDevice::rumble> ("rumble"),
+	JsHelpers::make_method<&WiimoteDevice::getLED> ("getLED"),
+	JsHelpers::make_method<&WiimoteDevice::setLED> ("setLED"),
+	JsHelpers::make_method<&WiimoteDevice::battery> ("battery"),
+	JsHelpers::make_method<&WiimoteDevice::extension> ("extension"),
+	JsHelpers::make_method<&WiimoteDevice::setMPNormalization> ("setMPNormalization"),
+	//JsHelpers::make_method<&WiimoteDevice::getMPNormalization> ("getMPNormalization"),
 	JS_FS_END
 };
 

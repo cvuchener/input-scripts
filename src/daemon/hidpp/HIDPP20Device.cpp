@@ -483,13 +483,13 @@ void HIDPP20Device::ReprogControlsV4_SetRawXYDivert (uint16_t control_id, bool d
 	_rc4->i.setControlReporting (control_id, flags, 0);
 }
 
-const JSClass HIDPP20Device::js_class = JS_HELPERS_CLASS("HIDPP20Device", HIDPP20Device);
+const JSClass HIDPP20Device::js_class = JsHelpers::make_class<HIDPP20Device> ("HIDPP20Device");
 
-#define HIDPP_JS_WRAPPER(interface_name, method_name) JS_HELPERS_METHOD(#interface_name "_" #method_name, HIDPP20Device::interface_name##_##method_name)
+#define HIDPP_JS_WRAPPER(interface_name, method_name) JsHelpers::make_method<&HIDPP20Device::interface_name##_##method_name> (#interface_name "_" #method_name)
 const JSFunctionSpec HIDPP20Device::js_fs[] = {
-	JS_HELPERS_METHOD("hasFeature", HIDPP20Device::hasFeature),
-	JS_HELPERS_METHOD("callFunction", HIDPP20Device::callFunction),
-	JS_HELPERS_METHOD("sendRawEvents", HIDPP20Device::sendRawEvents),
+	JsHelpers::make_method<&HIDPP20Device::hasFeature> ("hasFeature"),
+	JsHelpers::make_method<&HIDPP20Device::callFunction> ("callFunction"),
+	JsHelpers::make_method<&HIDPP20Device::sendRawEvents> ("sendRawEvents"),
 	HIDPP_JS_WRAPPER(MouseButtonSpy, GetButtonCount),
 	HIDPP_JS_WRAPPER(MouseButtonSpy, Start),
 	HIDPP_JS_WRAPPER(MouseButtonSpy, Stop),

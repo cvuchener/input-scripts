@@ -276,33 +276,42 @@ void finalizeWrapper (JSFreeOp *, JSObject *obj)
 	delete data;
 }
 
+template <typename T>
+constexpr JSClass make_class (const char *name)
+{
+	return {
+		name, JSCLASS_HAS_PRIVATE,
+		nullptr, nullptr, nullptr, nullptr,
+		nullptr, nullptr, nullptr, &finalizeWrapper<T>
+	};
 }
 
-#define JS_HELPERS_CLASS(name, type) \
-{ \
-	name, JSCLASS_HAS_PRIVATE, \
-	nullptr, nullptr, nullptr, nullptr, \
-	nullptr, nullptr, nullptr, &JsHelpers::finalizeWrapper<type> \
+template <auto method>
+constexpr JSNativeWrapper make_method_wrapper ()
+{
+	return { &MethodWrap<decltype(method)>::template wrapper<method>, nullptr };
 }
 
-#define JS_HELPERS_NATIVE_METHOD(method) \
-{ \
-	&JsHelpers::MethodWrap<decltype(&method)>::wrapper<&method>, \
-	nullptr \
+template <auto method>
+constexpr JSFunctionSpec make_method (const char *name)
+{
+	return {
+		name,
+		make_method_wrapper<method> (),
+		0, 0
+	};
 }
 
-#define JS_HELPERS_METHOD(name, method) \
-{ \
-	name, \
-	JS_HELPERS_NATIVE_METHOD(method), \
-	0, 0 \
+template <auto getter, auto setter>
+constexpr JSPropertySpec make_property (const char *name)
+{
+	return {
+		name, JSPROP_ENUMERATE | JSPROP_SHARED,
+		{ make_method_wrapper<getter> () },
+		{ make_method_wrapper<setter> () },
+	};
 }
 
-#define JS_HELPERS_PROPERTY(name, getter, setter) \
-{ \
-	name, JSPROP_ENUMERATE | JSPROP_SHARED, \
-	{ JS_HELPERS_NATIVE_METHOD(getter) }, \
-	{ JS_HELPERS_NATIVE_METHOD(setter) }, \
 }
 
 #endif

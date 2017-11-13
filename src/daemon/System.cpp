@@ -224,11 +224,11 @@ bool System::print_r (JSContext *cx, JS::CallArgs &args)
 	return true;
 }
 
-const JSClass System::js_class = JS_HELPERS_CLASS("System", System);
+const JSClass System::js_class = JsHelpers::make_class<System> ("System");
 
 const JSFunctionSpec System::js_fs[] = {
-	JS_HELPERS_METHOD("setTimeout", System::setTimeout),
-	JS_HELPERS_METHOD("exec", System::exec),
+	JsHelpers::make_method<&System::setTimeout> ("setTimeout"),
+	JsHelpers::make_method<&System::exec> ("exec"),
 	{
 		"print",
 		&JsHelpers::LLMethodWrapper<System, &System::print>,

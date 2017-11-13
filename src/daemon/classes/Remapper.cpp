@@ -104,16 +104,16 @@ void Remapper::mapped_event::reset ()
 	_parent->uinput ()->sendEvent (_event.type, _event.code, _default_value);
 }
 
-const JSClass Remapper::mapped_event::js_class = JS_HELPERS_CLASS("RemapperEvent", Remapper::mapped_event);
+const JSClass Remapper::mapped_event::js_class = JsHelpers::make_class<Remapper::mapped_event> ("RemapperEvent");
 
 const JSFunctionSpec Remapper::mapped_event::js_fs[] = {
-	JS_HELPERS_METHOD("setEvent", Remapper::mapped_event::setEvent),
-	JS_HELPERS_METHOD("setCode", Remapper::mapped_event::setCode),
-	JS_HELPERS_METHOD("addModifier", Remapper::mapped_event::addModifier),
-	JS_HELPERS_METHOD("addModifierMin", Remapper::mapped_event::addModifierMin),
-	JS_HELPERS_METHOD("addModifierMax", Remapper::mapped_event::addModifierMax),
-	JS_HELPERS_METHOD("setTransform", Remapper::mapped_event::setTransform),
-	JS_HELPERS_METHOD("setDefaultValue", Remapper::mapped_event::setDefaultValue),
+	JsHelpers::make_method<&Remapper::mapped_event::setEvent> ("setEvent"),
+	JsHelpers::make_method<&Remapper::mapped_event::setCode> ("setCode"),
+	JsHelpers::make_method<&Remapper::mapped_event::addModifier> ("addModifier"),
+	JsHelpers::make_method<&Remapper::mapped_event::addModifierMin> ("addModifierMin"),
+	JsHelpers::make_method<&Remapper::mapped_event::addModifierMax> ("addModifierMax"),
+	JsHelpers::make_method<&Remapper::mapped_event::setTransform> ("setTransform"),
+	JsHelpers::make_method<&Remapper::mapped_event::setDefaultValue> ("setDefaultValue"),
 	JS_FS_END
 };
 
@@ -183,12 +183,12 @@ void Remapper::event (uint16_t code, uint16_t type, int32_t value)
 	}
 }
 
-const JSClass Remapper::js_class = JS_HELPERS_CLASS("Remapper", Remapper);
+const JSClass Remapper::js_class = JsHelpers::make_class<Remapper> ("Remapper");
 
 const JSFunctionSpec Remapper::js_fs[] = {
-	JS_HELPERS_METHOD("addEvent", Remapper::addEvent),
-	JS_HELPERS_METHOD("connect", Remapper::connect),
-	JS_HELPERS_METHOD("disconnect", Remapper::disconnect),
+	JsHelpers::make_method<&Remapper::addEvent> ("addEvent"),
+	JsHelpers::make_method<&Remapper::connect> ("connect"),
+	JsHelpers::make_method<&Remapper::disconnect> ("disconnect"),
 	JS_FS_END
 };
 

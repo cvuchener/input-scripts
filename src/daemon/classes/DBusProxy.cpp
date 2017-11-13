@@ -412,7 +412,7 @@ bool DBusProxy::call (JSContext *cx, JS::CallArgs &args)
 	return true;
 }
 
-const JSClass DBusProxy::js_class = JS_HELPERS_CLASS("DBusProxy", DBusProxy);
+const JSClass DBusProxy::js_class = JsHelpers::make_class<DBusProxy> ("DBusProxy");
 
 const JSFunctionSpec DBusProxy::js_fs[] = {
 	{

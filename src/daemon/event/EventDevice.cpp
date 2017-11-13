@@ -183,10 +183,10 @@ int32_t EventDevice::getSimpleEvent (uint16_t type, uint16_t code)
 	return value;
 }
 
-const JSClass EventDevice::js_class = JS_HELPERS_CLASS("EventDevice", EventDevice);
+const JSClass EventDevice::js_class = JsHelpers::make_class<EventDevice> ("EventDevice");
 
 const JSFunctionSpec EventDevice::js_fs[] = {
-	JS_HELPERS_METHOD("grab", EventDevice::grab),
+	JsHelpers::make_method<&EventDevice::grab> ("grab"),
 	JS_FS_END
 };
 
