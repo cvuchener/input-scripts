@@ -8,12 +8,14 @@ Compilation
 -----------
 
 Compilation requires CMake and g++, and has the following dependencies:
+ - libsigc++-3.0
  - libevdev
  - mozjs-38 (SpiderMonkey)
  - libudev
  - dbus-c++
  - jsoncpp
  - libxwiimote (only required by wiimote driver)
+ - [hidpp library](https://github.com/cvuchener/hidpp) (only required for Logitech HID++ driver)
 
 Run:
 
@@ -27,6 +29,7 @@ make
 For compiling optional drivers, add to cmake options:
  - `-DWITH_STEAMCONTROLLER=ON` for Steam Controller driver,
  - `-DWITH_WIIMOTE=ON` for Wii Remote driver.
+ - `-DWITH_HIDPP=ON` for Logitech HID++ driver.
 
 
 Configuration
@@ -82,9 +85,8 @@ Note that the Steam Controller need read/write access to the hidraw nodes.
 
 ### Scripts
 
-Every script must contains at least three methods:
+Every script must contains at least two methods:
  - `init ()`: called when the script is loaded
- - `event (ev)`: called for each input event. `ev` always has a `type` property, other properties may vary depending on the driver and the event type. If the event type is a valid `EV_*` type from linux input events, it should have `code` and `value` properties.
  - `finalize ()`: called when the script is unloaded
 
 The scope object from the script is used as a prototype to create a script object (the functions are called as this object's methods).
@@ -93,6 +95,29 @@ Some global variables are created:
  - `importScript`: a function for importing other scripts. The scope object is returned after executing the script.
  - `input`: this is the input device object, its class may vary depending on the driver.
  - `system`: provides some useful functions for interacting with the system.
+
+Input objects have two signals for receiving input events:
+ - `event(ev)`: Sent for every input event. The parameter object always has a `type` property, other properties may vary depending on the driver and the event type. If the event type is a valid `EV_*` type from linux input events, it should have `code` and `value` properties.
+ - `simpleEvent(type, code, value)`: Sent for simple linux-like input events.
+
+Use the `connect (object, signal_name, callback)` function to connect a signal, it returns a connection ID that can be passed to `disconnect (conn_id)` for disconnecting the signal. All signals are automatically disconnected when the script is terminated.
+
+A typical script would look like:
+
+```
+function init () {
+	// Configure device here
+	connect (input, 'event', this.event.bind (this);
+}
+
+function event (ev) {
+	// Process events
+}
+
+function finalize () {
+	// Cleanup and restore device state
+}
+```
 
 See `config-example/scripts` for script examples.
 
@@ -136,6 +161,7 @@ Currently supported devices are:
  - Generic Linux event devices
  - Valve's Steam Controller
  - Wii remotes (any device supported by the wiimote kernel driver and libxwiimote)
+ - Logitech HID++
 
 
 ### Event devices
@@ -159,9 +185,16 @@ This driver name is `wiimote`.
 TODO: API documentation (see src/daemon/wiimote/WiimoteDevice.h).
 
 
+### Logitech HID++
+
+This driver name is `hidpp10` for HID++ 1.0 devices or `hidpp20` ofr HID++ 2.0 or later devices.
+
+TODO: API documentation (see src/daemon/hidpp/HIDPP10Device.h and src/daemon/hidpp/HIDPP20/Device.h)
+
+
 Known issues
 ------------
 
- - uinput force feedback is not very robust and it may cause Kernel Oops and unkillable processes. Removing a uinput device when force feedback is in use may cause this.
- - dbus-c++ need the fix from [Steffen Kieß's fix-copy-containers branch](https://github.com/steffen-kiess/dbus-cplusplus/tree/fix-copy-containers) or it may crash when calling org.freedesktop.DBus.ObjectManager.GetManagedObjects.
+ - uinput force feedback is not very robust and it may cause Kernel Oops and unkillable processes. Removing a uinput device when force feedback is in use may cause this (fixed in linux 4.14?).
+ - dbus-c++ need the fix from [Steffen Kieß's fix-copy-containers branch](https://github.com/steffen-kiess/dbus-cplusplus/tree/fix-copy-containers) or it may crash when calling org.freedesktop.DBus.ObjectManager.GetManagedObjects (patch was merged [upstream](https://github.com/andreas-volz/dbus-cplusplus)).
 
