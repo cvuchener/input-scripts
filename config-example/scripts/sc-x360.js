@@ -1,11 +1,6 @@
 const SteamControllerFF = importScript ("imports/sc-ff.js");
-const Remapper = importScript ("imports/remapper.js");
 const ButtonMap = importScript ("imports/button-map.js");
 const SC = SteamControllerDevice;
-
-function inverse (value) {
-	return -value;
-}
 
 function init () {
 	input.disableKeys ();
@@ -45,32 +40,34 @@ function init () {
 
 	this.uinput.create ();
 
-	this.remapper = Object.create (Remapper);
-	this.remapper.init (input, this.uinput, [
-		{ type: EV_KEY, code: SC.BtnA, new_code: BTN_SOUTH },
-		{ type: EV_KEY, code: SC.BtnB, new_code: BTN_EAST },
-		{ type: EV_KEY, code: SC.BtnX, new_code: BTN_NORTH },
-		{ type: EV_KEY, code: SC.BtnY, new_code: BTN_WEST },
-		{ type: EV_KEY, code: SC.BtnShoulderLeft, new_code: BTN_TL },
-		{ type: EV_KEY, code: SC.BtnShoulderRight, new_code: BTN_TR },
-		{ type: EV_KEY, code: SC.BtnSelect, new_code: BTN_SELECT },
-		{ type: EV_KEY, code: SC.BtnMode, new_code: BTN_MODE },
-		{ type: EV_KEY, code: SC.BtnStart, new_code: BTN_START },
-		{ type: EV_KEY, code: SC.BtnClickLeft,
-			modifiers: [{ type: SC.EventBtn, code: SC.BtnTouchLeft, max: 0 }],
-			new_code: BTN_THUMBL },
-		{ type: EV_KEY, code: SC.BtnClickRight, new_code: BTN_THUMBR },
-		{ type: EV_ABS, code: SC.AbsLeftX,
-			modifiers: [{ type: SC.EventBtn, code: SC.BtnTouchLeft, max: 0 }],
-			new_code: ABS_X },
-		{ type: EV_ABS, code: SC.AbsLeftY,
-			modifiers: [{ type: SC.EventBtn, code: SC.BtnTouchLeft, max: 0 }],
-			new_code: ABS_Y, transform: this.inverse },
-		{ type: EV_ABS, code: SC.AbsRightX, new_code: ABS_RX },
-		{ type: EV_ABS, code: SC.AbsRightY, new_code: ABS_RY },
-		{ type: EV_ABS, code: SC.AbsLeftTrigger, new_code: ABS_Z },
-		{ type: EV_ABS, code: SC.AbsRightTrigger, new_code: ABS_RZ },
-	]);
+	this.remapper = new Remapper (input, this.uinput);
+	this.remapper.addEvent (EV_KEY, SC.BtnA).setCode (BTN_SOUTH);
+	this.remapper.addEvent (EV_KEY, SC.BtnB).setCode (BTN_EAST);
+	this.remapper.addEvent (EV_KEY, SC.BtnX).setCode (BTN_NORTH);
+	this.remapper.addEvent (EV_KEY, SC.BtnY).setCode (BTN_WEST);
+	this.remapper.addEvent (EV_KEY, SC.BtnShoulderLeft).setCode (BTN_TL);
+	this.remapper.addEvent (EV_KEY, SC.BtnShoulderRight).setCode (BTN_TR);
+	this.remapper.addEvent (EV_KEY, SC.BtnSelect).setCode (BTN_SELECT);
+	this.remapper.addEvent (EV_KEY, SC.BtnMode).setCode (BTN_MODE);
+	this.remapper.addEvent (EV_KEY, SC.BtnStart).setCode (BTN_START);
+	this.remapper.addEvent (EV_KEY, SC.BtnClickLeft)
+		.addModifierMax (SC.EventBtn, SC.BtnTouchLeft, 0)
+		.setCode (BTN_THUMBL);
+	this.remapper.addEvent (EV_KEY, SC.BtnClickRight).setCode (BTN_THUMBR);
+	this.remapper.addEvent (EV_ABS, SC.AbsLeftX)
+		.addModifierMax (SC.EventBtn, SC.BtnTouchLeft, 0)
+		.setCode (ABS_X);
+	this.remapper.addEvent (EV_ABS, SC.AbsLeftY)
+		.addModifierMax (SC.EventBtn, SC.BtnTouchLeft, 0)
+		.setCode (ABS_Y)
+		.setTransform (-1, 1, 0);
+	this.remapper.addEvent (EV_ABS, SC.AbsRightX).setCode (ABS_RX);
+	this.remapper.addEvent (EV_ABS, SC.AbsRightY).setCode (ABS_RY);
+	this.remapper.addEvent (EV_ABS, SC.AbsLeftTrigger).setCode (ABS_Z);
+	this.remapper.addEvent (EV_ABS, SC.AbsRightTrigger).setCode (ABS_RZ);
+	this.remapper.addEvent (EV_SYN, SYN_REPORT);
+
+	this.remapper.connect ();
 
 	this.dpad = Object.create (ButtonMap);
 	this.dpad.init ([
@@ -83,7 +80,11 @@ function init () {
 		{ type: "polar", min_r: "8192", min_angle: -150, max_angle: -30,
 			event: this.touchButton.bind (this, SC.HapticLeft, EV_ABS, ABS_HAT0Y, 1)}]);
 
-	connect (input, 'event', this.event.bind (this));
+	this.evfilter = new EventFilter (input);
+	this.evfilter.addMatchCode (SC.EventBtn, SC.BtnClickLeft);
+	this.evfilter.addMatchCode (SC.EventTouchPad, SC.TouchPadLeft);
+	connect (this.evfilter, 'event', this.event.bind (this));
+	this.evfilter.connect ();
 }
 
 function finalize () {
@@ -103,17 +104,11 @@ function event (ev) {
 	case SC.EventBtn:
 		if (ev.code == SC.BtnClickLeft && ev.value == 0 && input.keyPressed (SC.BtnTouchLeft))
 			this.dpad.release ();
-		// fall through
-	case SC.EventAbs:
-		this.remapper.event (ev.type, ev.code, ev.value);
 		break;
 
 	case SC.EventTouchPad:
 		if (ev.code == SC.TouchPadLeft && input.keyPressed (SC.BtnTouchLeft) && input.keyPressed (SC.BtnClickLeft))
 			this.dpad.updatePos (ev.x, ev.y);
 		break;
-	
-	case EV_SYN:
-		this.uinput.sendSyn (ev.code);
 	}
 }

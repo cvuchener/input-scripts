@@ -1,10 +1,10 @@
 const SteamControllerFF = importScript ("imports/sc-ff.js");
-const Remapper = importScript ("imports/remapper.js");
 const SC = SteamControllerDevice;
 
 function init () {
 	input.disableKeys ();
 	input.setSetting (SC.SettingTrackBall, SC.TrackBallOff);
+	input.setTouchPadEventMode (true, false);
 
 	this.uinput = new UInput ();
 	this.uinput.name = "Valve Steam Controller Gamepad";
@@ -35,69 +35,59 @@ function init () {
 	this.uinput.setAbs (ABS_HAT0Y, -32768, 32767, 16, 128);
 	this.uinput.setAbs (ABS_HAT1X, -32768, 32767, 16, 128);
 	this.uinput.setAbs (ABS_HAT1Y, -32768, 32767, 16, 128);
-	this.uinput.setAbs (ABS_GAS, 0, 255, 0, 0);
-	this.uinput.setAbs (ABS_BRAKE, 0, 255, 0, 0);
+	this.uinput.setAbs (ABS_HAT2X, 0, 255, 0, 0);
+	this.uinput.setAbs (ABS_HAT2Y, 0, 255, 0, 0);
 
 	this.ff = Object.create (SteamControllerFF);
 	this.ff.init (this.uinput);
 
 	this.uinput.create ();
 
-	this.remapper = Object.create (Remapper);
-	this.remapper.init (input, this.uinput, [
-		{ type: EV_KEY, code: SC.BtnA, new_code: BTN_SOUTH },
-		{ type: EV_KEY, code: SC.BtnB, new_code: BTN_EAST },
-		{ type: EV_KEY, code: SC.BtnX, new_code: BTN_WEST },
-		{ type: EV_KEY, code: SC.BtnY, new_code: BTN_NORTH },
-		{ type: EV_KEY, code: SC.BtnShoulderLeft, new_code: BTN_TL },
-		{ type: EV_KEY, code: SC.BtnShoulderRight, new_code: BTN_TR },
-		{ type: EV_KEY, code: SC.BtnTriggerLeft, new_code: BTN_TL2 },
-		{ type: EV_KEY, code: SC.BtnTriggerRight, new_code: BTN_TR2 },
-		{ type: EV_KEY, code: SC.BtnGripLeft, new_code: BTN_C },
-		{ type: EV_KEY, code: SC.BtnGripRight, new_code: BTN_Z },
-		{ type: EV_KEY, code: SC.BtnSelect, new_code: BTN_SELECT },
-		{ type: EV_KEY, code: SC.BtnMode, new_code: BTN_MODE },
-		{ type: EV_KEY, code: SC.BtnStart, new_code: BTN_START },
-		{ type: EV_KEY, code: SC.BtnClickLeft,
-			modifiers: [{ type: SC.EventBtn, code: SC.BtnTouchLeft, max: 0 }],
-			new_code: 0x13f },
-		{ type: EV_KEY, code: SC.BtnClickLeft,
-			modifiers: [{ type: SC.EventBtn, code: SC.BtnTouchLeft, min: 1 }],
-			new_code: BTN_THUMBL },
-		{ type: EV_KEY, code: SC.BtnClickRight, new_code: BTN_THUMBR },
-		{ type: EV_ABS, code: SC.AbsLeftX,
-			modifiers: [{ type: SC.EventBtn, code: SC.BtnTouchLeft, max: 0 }],
-			new_code: ABS_X },
-		{ type: EV_ABS, code: SC.AbsLeftY,
-			modifiers: [{ type: SC.EventBtn, code: SC.BtnTouchLeft, max: 0 }],
-			new_code: ABS_Y },
-		{ type: EV_ABS, code: SC.AbsLeftX,
-			modifiers: [{ type: SC.EventBtn, code: SC.BtnTouchLeft, min: 1 }],
-			new_code: ABS_HAT0X },
-		{ type: EV_ABS, code: SC.AbsLeftY,
-			modifiers: [{ type: SC.EventBtn, code: SC.BtnTouchLeft, min: 1 }],
-			new_code: ABS_HAT0Y },
-		{ type: EV_ABS, code: SC.AbsRightX, new_code: ABS_HAT1X },
-		{ type: EV_ABS, code: SC.AbsRightY, new_code: ABS_HAT1Y },
-		{ type: EV_ABS, code: SC.AbsLeftTrigger, new_code: ABS_GAS },
-		{ type: EV_ABS, code: SC.AbsRightTrigger, new_code: ABS_BRAKE },
-	]);
-
-	connect (input, 'event', this.event.bind (this));
+	this.remapper = new Remapper (input, this.uinput);
+	this.remapper.addEvent (EV_KEY, SC.BtnA).setCode (BTN_SOUTH);
+	this.remapper.addEvent (EV_KEY, SC.BtnB).setCode (BTN_EAST);
+	this.remapper.addEvent (EV_KEY, SC.BtnX).setCode (BTN_WEST);
+	this.remapper.addEvent (EV_KEY, SC.BtnY).setCode (BTN_NORTH);
+	this.remapper.addEvent (EV_KEY, SC.BtnShoulderLeft).setCode (BTN_TL);
+	this.remapper.addEvent (EV_KEY, SC.BtnShoulderRight).setCode (BTN_TR);
+	this.remapper.addEvent (EV_KEY, SC.BtnTriggerLeft).setCode (BTN_TL2);
+	this.remapper.addEvent (EV_KEY, SC.BtnTriggerRight).setCode (BTN_TR2);
+	this.remapper.addEvent (EV_KEY, SC.BtnGripLeft).setCode (BTN_C);
+	this.remapper.addEvent (EV_KEY, SC.BtnGripRight).setCode (BTN_Z);
+	this.remapper.addEvent (EV_KEY, SC.BtnSelect).setCode (BTN_SELECT);
+	this.remapper.addEvent (EV_KEY, SC.BtnMode).setCode (BTN_MODE);
+	this.remapper.addEvent (EV_KEY, SC.BtnStart).setCode (BTN_START);
+	this.remapper.addEvent (EV_KEY, SC.BtnClickLeft)
+		.addModifierMax (SC.EventBtn, SC.BtnTouchLeft, 0)
+		.setCode (BTN_THUMBL);
+	this.remapper.addEvent (EV_KEY, SC.BtnClickLeft)
+		.addModifierMin (SC.EventBtn, SC.BtnTouchLeft, 1)
+		.setCode (0x13f);
+	this.remapper.addEvent (EV_KEY, SC.BtnClickRight).setCode (BTN_THUMBR);
+	this.remapper.addEvent (EV_ABS, SC.AbsLeftX)
+		.addModifierMax (SC.EventBtn, SC.BtnTouchLeft, 0)
+		.setCode (ABS_X);
+	this.remapper.addEvent (EV_ABS, SC.AbsLeftY)
+		.addModifierMax (SC.EventBtn, SC.BtnTouchLeft, 0)
+		.setTransform (-1, 1, 0)
+		.setCode (ABS_Y);
+	this.remapper.addEvent (EV_ABS, SC.AbsLeftX)
+		.addModifierMin (SC.EventBtn, SC.BtnTouchLeft, 1)
+		.setCode (ABS_HAT0X);
+	this.remapper.addEvent (EV_ABS, SC.AbsLeftY)
+		.addModifierMin (SC.EventBtn, SC.BtnTouchLeft, 1)
+		.setTransform (-1, 1, 0)
+		.setCode (ABS_HAT0Y);
+	this.remapper.addEvent (EV_ABS, SC.AbsRightX).setCode (ABS_HAT1X);
+	this.remapper.addEvent (EV_ABS, SC.AbsRightY)
+		.setTransform (-1, 1, 0)
+		.setCode (ABS_HAT1Y);
+	this.remapper.addEvent (EV_ABS, SC.AbsLeftTrigger).setCode (ABS_HAT2Y);
+	this.remapper.addEvent (EV_ABS, SC.AbsRightTrigger).setCode (ABS_HAT2X);
+	this.remapper.addEvent (EV_SYN, SYN_REPORT);
+	this.remapper.connect ();
 }
 
 function finalize () {
 	this.uinput.destroy ();
-}
-
-function event (ev) {
-	switch (ev.type) {
-	case SC.EventBtn:
-	case SC.EventAbs:
-		this.remapper.event (ev.type, ev.code, ev.value);
-		break;
-	
-	case EV_SYN:
-		this.uinput.sendSyn (ev.code);
-	}
 }

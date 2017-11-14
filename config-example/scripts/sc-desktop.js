@@ -1,4 +1,3 @@
-const Remapper = importScript ("imports/remapper.js");
 const ButtonMap = importScript ("imports/button-map.js");
 const ScrollWheel = importScript ("imports/scroll-wheel.js");
 const SC = SteamControllerDevice;
@@ -35,26 +34,26 @@ function init () {
 
 	this.uinput.create ();
 
-	this.remapper = Object.create (Remapper);
-	this.remapper.init (input, this.uinput, [
-		{ type: EV_KEY, code: SC.BtnA, new_code: KEY_ENTER },
-		{ type: EV_KEY, code: SC.BtnB, new_code: KEY_SPACE },
-		{ type: EV_KEY, code: SC.BtnX, new_code: KEY_PAGEUP },
-		{ type: EV_KEY, code: SC.BtnY, new_code: KEY_PAGEDOWN },
-		{ type: EV_KEY, code: SC.BtnShoulderLeft, new_code: KEY_LEFTCTRL },
-		{ type: EV_KEY, code: SC.BtnShoulderRight, new_code: KEY_LEFTALT },
-		{ type: EV_KEY, code: SC.BtnTriggerLeft, new_code: BTN_RIGHT },
-		{ type: EV_KEY, code: SC.BtnTriggerRight, new_code: BTN_LEFT },
-		{ type: EV_KEY, code: SC.BtnGripLeft, new_code: BTN_SIDE },
-		{ type: EV_KEY, code: SC.BtnGripRight, new_code: BTN_EXTRA },
-		{ type: EV_KEY, code: SC.BtnSelect, new_code: KEY_TAB },
-		{ type: EV_KEY, code: SC.BtnMode, new_code: KEY_LEFTMETA },
-		{ type: EV_KEY, code: SC.BtnStart, new_code: KEY_ESC },
-		{ type: EV_KEY, code: SC.BtnClickLeft,
-			modifiers: [{ type: SC.EventBtn, code: SC.BtnTouchLeft, min: 1 }],
-			new_code: BTN_MIDDLE },
-		{ type: EV_KEY, code: SC.BtnClickRight, new_code: KEY_LEFTSHIFT },
-	]);
+	this.remapper = new Remapper (input, this.uinput);
+	this.remapper.addEvent (EV_KEY, SC.BtnA).setCode (KEY_ENTER);
+	this.remapper.addEvent (EV_KEY, SC.BtnB).setCode (KEY_SPACE);
+	this.remapper.addEvent (EV_KEY, SC.BtnX).setCode (KEY_PAGEUP);
+	this.remapper.addEvent (EV_KEY, SC.BtnY).setCode (KEY_PAGEDOWN);
+	this.remapper.addEvent (EV_KEY, SC.BtnShoulderLeft).setCode (KEY_LEFTCTRL);
+	this.remapper.addEvent (EV_KEY, SC.BtnShoulderRight).setCode (KEY_LEFTALT);
+	this.remapper.addEvent (EV_KEY, SC.BtnTriggerLeft).setCode (BTN_RIGHT);
+	this.remapper.addEvent (EV_KEY, SC.BtnTriggerRight).setCode (BTN_LEFT);
+	this.remapper.addEvent (EV_KEY, SC.BtnGripLeft).setCode (BTN_SIDE);
+	this.remapper.addEvent (EV_KEY, SC.BtnGripRight).setCode (BTN_EXTRA);
+	this.remapper.addEvent (EV_KEY, SC.BtnSelect).setCode (KEY_TAB);
+	this.remapper.addEvent (EV_KEY, SC.BtnMode).setCode (KEY_LEFTMETA);
+	this.remapper.addEvent (EV_KEY, SC.BtnStart).setCode (KEY_ESC);
+	this.remapper.addEvent (EV_KEY, SC.BtnClickLeft)
+		.addModifierMin (SC.EventBtn, SC.BtnTouchLeft, 1)
+		.setCode (BTN_MIDDLE);
+	this.remapper.addEvent (EV_KEY, SC.BtnClickRight).setCode (KEY_LEFTSHIFT);
+	this.remapper.addEvent (EV_SYN, SYN_REPORT);
+	this.remapper.connect ();
 
 	this.dpad = Object.create (ButtonMap);
 	this.dpad.init ([
@@ -69,7 +68,11 @@ function init () {
 	this.scroll_wheel = Object.create (ScrollWheel);
 	this.scroll_wheel.init (this.scrollWheelEvent.bind (this));
 
-	connect (input, 'event', this.event.bind (this));
+	this.evfilter = new EventFilter (input);
+	this.evfilter.addMatchCode (SC.EventBtn, SC.BtnTouchLeft);
+	this.evfilter.addMatchCode (SC.EventTouchPad, SC.TouchPadLeft);
+	connect (this.evfilter, 'event', this.event.bind (this));
+	this.evfilter.connect ();
 }
 
 function finalize () {
@@ -98,19 +101,17 @@ function event (ev) {
 			else
 				this.dpad.release ();
 		}
-		this.remapper.event (ev.type, ev.code, ev.value);
 		break;
 
 	case SC.EventTouchPad:
 		if (ev.code == SC.TouchPadLeft) {
-			if (input.keyPressed (SC.BtnTouchLeft))
-				this.scroll_wheel.updatePos ( ev.x, ev.y);
+			if (input.keyPressed (SC.BtnTouchLeft)) {
+				if (ev.x != 0 || ev.y != 0)
+					this.scroll_wheel.updatePos (ev.x, ev.y);
+			}
 			else
-				this.dpad.updatePos ( ev.x, ev.y);
+				this.dpad.updatePos (ev.x, ev.y);
 		}
 		break;
-
-	case EV_SYN:
-		this.uinput.sendSyn (ev.code);
 	}
 }
