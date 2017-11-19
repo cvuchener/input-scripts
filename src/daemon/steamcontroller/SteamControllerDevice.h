@@ -43,6 +43,8 @@ class SteamControllerReceiver;
  * Left touchpad and stick use the same axis values (AbsLeftX, AbsLeftY and
  * TouchPadLeft). They can be discrimated by looking at the value of
  * BtnTouchLeft.
+ *
+ * \ingroup InputDevices
  */
 class SteamControllerDevice: public InputDevice
 {

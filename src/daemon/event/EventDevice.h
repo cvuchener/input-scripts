@@ -28,6 +28,8 @@
  *
  * Events from this device are standard linux input events with
  * "type", "code" and "value" entries.
+ *
+ * \ingroup InputDevices
  */
 class EventDevice: public InputDevice
 {

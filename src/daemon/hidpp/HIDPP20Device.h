@@ -46,6 +46,8 @@ class IReprogControlsV4;
  *  - MouseButtonSpy (sent as EV_KEY, BTN_MOUSE+i events),
  *  - OnboardProfiles (EventOnboardProfilesCurrentProfile, and EventOnboardProfilesCurrentDPIIndex events),
  *  - ReprogControlsV4 (ReprogControlsV4Button, and ReprogControlsV4RawXY events).
+ *
+ * \ingroup InputDevices
  */
 class HIDPP20Device: public InputDevice
 {

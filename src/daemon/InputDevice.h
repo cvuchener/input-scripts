@@ -25,7 +25,13 @@
 #include "jstpl/jstpl.h"
 
 /**
+ * \defgroup InputDevices Input devices
+ */
+
+/**
  * This is the base class for every input device class used by drivers.
+ *
+ * \ingroup InputDevices
  */
 class InputDevice
 {

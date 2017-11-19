@@ -36,6 +36,8 @@ struct MouseInfo;
  *
  * No event are sent currently. But associated event devices can be obtained
  * with getEventDevices.
+ *
+ * \ingroup InputDevices
  */
 class HIDPP10Device: public InputDevice
 {
