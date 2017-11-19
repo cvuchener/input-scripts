@@ -23,6 +23,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <variant>
 #include <stdexcept>
 #include <type_traits>
 #include "detector.h"
@@ -35,6 +36,48 @@ namespace jstpl
 
 template <typename T>
 using is_js_class_t = decltype (T::js_class);
+
+// Assigning C++ values to JS::Value
+inline void setJSValue (JSContext *cx, JS::MutableHandleValue var, const std::string &str);
+template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+inline void setJSValue (JSContext *cx, JS::MutableHandleValue var, T value);
+inline void setJSValue (JSContext *cx, JS::MutableHandleValue var, double value);
+template <typename T, typename = std::enable_if_t<is_detected_exact_v<const JSClass, is_js_class_t, T>>>
+inline void setJSValue (JSContext *cx, JS::MutableHandleValue var, T *object);
+template <typename T>
+inline void setJSValue (JSContext *cx, JS::MutableHandleValue var, const std::vector<T> &array);
+template <typename T>
+inline void setJSValue (JSContext *cx, JS::MutableHandleValue var, const std::map<std::string, T> &properties);
+template <typename... T>
+inline void setJSValue (JSContext *cx, JS::MutableHandleValue var, const std::variant<T...> &variant);
+
+// Converting JS::Value to C++ types
+inline void readJSValue (JSContext *cx, std::string &var, JS::HandleValue value);
+template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+inline void readJSValue (JSContext *cx, T &var, JS::HandleValue value);
+inline void readJSValue (JSContext *cx, double &var, JS::HandleValue value);
+inline void readJSValue (JSContext *cx, bool &var, JS::HandleValue value);
+inline void readJSValue (JSContext *cx, std::vector<bool>::reference var, JS::HandleValue value);
+template <typename T>
+inline void readJSValue (JSContext *cx, std::vector<T> &var, JS::HandleValue value);
+template <typename T>
+inline void readJSValue (JSContext *cx, std::map<std::string, T> &var, JS::HandleValue value);
+template <typename R, typename... Args>
+inline void readJSValue (JSContext *cx, std::function<R (Args...)> &var, JS::HandleValue value);
+template <typename... Args>
+inline void readJSValue (JSContext *cx, std::function<void (Args...)> &var, JS::HandleValue value);
+template <typename T, typename = std::enable_if_t<is_detected_exact_v<const JSClass, is_js_class_t, T>>>
+void readJSValue (JSContext *cx, T *&var, JS::HandleValue value);
+template <typename... T>
+void readJSValue (JSContext *cx, std::variant<T...> &var, JS::HandleValue value);
+
+}
+
+#include "ClassManager.h"
+
+// Define templates
+namespace jstpl
+{
 
 // Assigning C++ values to JS::Value
 inline void setJSValue (JSContext *cx, JS::MutableHandleValue var, const std::string &str)
@@ -87,6 +130,12 @@ inline void setJSValue (JSContext *cx, JS::MutableHandleValue var, const std::ma
 	var.setObject (*obj);
 }
 
+template <typename... T>
+inline void setJSValue (JSContext *cx, JS::MutableHandleValue var, const std::variant<T...> &variant)
+{
+	std::visit ([cx, var] (const auto &value) { setJSValue (cx, var, value); }, variant);
+}
+
 // Converting JS::Value to C++ types
 inline void readJSValue (JSContext *cx, std::string &var, JS::HandleValue value)
 {
@@ -128,6 +177,14 @@ inline void readJSValue (JSContext *cx, bool &var, JS::HandleValue value)
 	var = value.toBoolean ();
 }
 
+inline void readJSValue (JSContext *cx, std::vector<bool>::reference var, JS::HandleValue value)
+{
+	if (!value.isBoolean ()) {
+		throw std::invalid_argument ("must be an boolean");
+	}
+	var = value.toBoolean ();
+}
+
 template <typename T>
 inline void readJSValue (JSContext *cx, std::vector<T> &var, JS::HandleValue value)
 {
@@ -146,7 +203,8 @@ inline void readJSValue (JSContext *cx, std::vector<T> &var, JS::HandleValue val
 }
 
 template <typename T>
-inline void readJSValue (JSContext *cx, std::map<std::string, T> &var, JS::HandleValue value) {
+inline void readJSValue (JSContext *cx, std::map<std::string, T> &var, JS::HandleValue value)
+{
 	if (!value.isObject ()) {
 		throw std::invalid_argument ("must be an object");
 	}
@@ -170,26 +228,28 @@ inline void readJSValue (JSContext *cx, std::map<std::string, T> &var, JS::Handl
 	JS_DestroyIdArray (cx, ids);
 }
 
-template <int n, typename... Args>
-struct ArgumentVector;
+namespace detail {
+	template <int n, typename... Args>
+	struct ArgumentVector;
 
-template <int n, typename First, typename... Rest>
-struct ArgumentVector<n, First, Rest...>
-{
-	inline static void pack (JSContext *cx, JS::AutoValueVector &jsargs, First first, Rest... rest)
+	template <int n, typename First, typename... Rest>
+	struct ArgumentVector<n, First, Rest...>
 	{
-		setJSValue (cx, jsargs[n], first);
-		ArgumentVector<n+1, Rest...>::pack (cx, jsargs, rest...);
-	}
-};
+		inline static void pack (JSContext *cx, JS::AutoValueVector &jsargs, First first, Rest... rest)
+		{
+			setJSValue (cx, jsargs[n], first);
+			ArgumentVector<n+1, Rest...>::pack (cx, jsargs, rest...);
+		}
+	};
 
-template <int n>
-struct ArgumentVector<n>
-{
-	inline static void pack (JSContext *cx, JS::AutoValueVector &jsargs)
+	template <int n>
+	struct ArgumentVector<n>
 	{
-	}
-};
+		inline static void pack (JSContext *cx, JS::AutoValueVector &jsargs)
+		{
+		}
+	};
+}
 
 template <typename R, typename... Args>
 inline void readJSValue (JSContext *cx, std::function<R (Args...)> &var, JS::HandleValue value)
@@ -200,7 +260,7 @@ inline void readJSValue (JSContext *cx, std::function<R (Args...)> &var, JS::Han
 		return thread->execOnJsThreadSync<R> ([cx, fun, args...] () {
 			JS::AutoValueVector jsargs (cx);
 			jsargs.resize (sizeof... (Args));
-			ArgumentVector<0, Args...>::pack (cx, jsargs, args...);
+			detail::ArgumentVector<0, Args...>::pack (cx, jsargs, args...);
 			JS::RootedValue rval (cx);
 			JS_CallFunctionValue (cx, JS::NullPtr (), *fun, jsargs, &rval);
 			R ret;
@@ -219,7 +279,7 @@ inline void readJSValue (JSContext *cx, std::function<void (Args...)> &var, JS::
 		thread->execOnJsThreadSync<int> ([cx, fun, args...] () {
 			JS::AutoValueVector jsargs (cx);
 			jsargs.resize (sizeof... (Args));
-			ArgumentVector<0, Args...>::pack (cx, jsargs, args...);
+			detail::ArgumentVector<0, Args...>::pack (cx, jsargs, args...);
 			JS::RootedValue rval (cx);
 			JS_CallFunctionValue (cx, JS::NullPtr (), *fun, jsargs, &rval);
 			return 0;
@@ -227,15 +287,42 @@ inline void readJSValue (JSContext *cx, std::function<void (Args...)> &var, JS::
 	});
 }
 
-template <typename T, typename = std::enable_if_t<is_detected_exact_v<const JSClass, is_js_class_t, T>>>
-void readJSValue (JSContext *cx, T *&var, JS::HandleValue value);
+namespace detail {
+	template <typename Variant, typename... T>
+	struct VariantAlternative;
 
+	template <typename Variant, typename T, typename... Rest>
+	struct VariantAlternative<Variant, T, Rest...>
+	{
+		inline static Variant readJS (JSContext *cx, JS::HandleValue value)
+		{
+			try {
+				T var;
+				readJSValue (cx, var, value);
+				return var;
+			}
+			catch (std::exception &e) {
+				return VariantAlternative<Variant, Rest...>::readJS (cx, value);
+			}
+		}
+	};
+
+	template <typename Variant>
+	struct VariantAlternative<Variant>
+	{
+		inline static Variant readJS (JSContext *, JS::HandleValue)
+		{
+			throw std::invalid_argument ("not convertible to any variant alternative");
+		}
+	};
 }
 
-#include "ClassManager.h"
-
-namespace jstpl
+template <typename... T>
+void readJSValue (JSContext *cx, std::variant<T...> &var, JS::HandleValue value)
 {
+	var = detail::VariantAlternative<std::variant<T...>, T...>::readJS (cx, value);
+}
+
 template <typename T, typename = std::enable_if_t<is_detected_exact_v<const JSClass, is_js_class_t, T>>>
 inline void readJSValue (JSContext *cx, T *&var, JS::HandleValue value)
 {
@@ -251,6 +338,7 @@ inline void readJSValue (JSContext *cx, T *&var, JS::HandleValue value)
 	auto data = static_cast<std::pair<bool, T *> *> (JS_GetPrivate (obj));
 	var = data->second;
 }
-}
+
+} // namespace jstpl
 
 #endif

@@ -22,6 +22,9 @@
 #include <hidpp10/DeviceInfo.h>
 #include <hidpp10/IIndividualFeatures.h>
 #include <hidpp10/IResolution.h>
+#include <hidpp10/ProfileFormat.h>
+#include <hidpp10/RAMMapping.h>
+#include <hidpp10/IProfile.h>
 
 HIDPP10Device::HIDPP10Device (HIDPP::Device &&device, const std::vector<std::string> &paths):
 	_device (std::move (device)),
@@ -158,6 +161,136 @@ void HIDPP10Device::setCurrentResolution (const std::vector<unsigned int> &dpi)
 	}
 }
 
+struct SettingConvert
+{
+	const HIDPP::SettingDesc &desc;
+
+	HIDPP::Setting operator() (bool value)
+	{
+		if (desc.type () != HIDPP::Setting::Type::Boolean)
+			throw std::invalid_argument ("Type not accepted for this setting");
+		return value;
+	}
+
+	HIDPP::Setting operator() (int value)
+	{
+		switch (desc.type ()) {
+		case HIDPP::Setting::Type::Boolean:
+			return value != 0;
+		case HIDPP::Setting::Type::Integer:
+			return value;
+		case HIDPP::Setting::Type::Enum:
+			return HIDPP::EnumValue (desc.enumDesc (), value);
+		default:
+			throw std::invalid_argument ("Type not accepted for this setting");
+		}
+	}
+
+	HIDPP::Setting operator() (const std::string &value)
+	{
+		return desc.convertFromString (value);
+	}
+
+	HIDPP::Setting operator() (const HIDPP::LEDVector &vec)
+	{
+		if (desc.type () != HIDPP::Setting::Type::LEDVector)
+			throw std::invalid_argument ("Type not accepted for this setting");
+		return vec;
+	}
+};
+
+template <typename T>
+struct BitField
+{
+	T operator() (int value)
+	{
+		if (value < 0 || value >= (int) (sizeof (T) * 8))
+			std::invalid_argument ("Value too big");
+		return 1 << value;
+	}
+
+	T operator() (const std::vector<int> &values)
+	{
+		T res = 0;
+		for (int value: values) {
+			if (value < 0 || value >= (int) (sizeof (T) * 8))
+				std::invalid_argument ("Value too big");
+			res |= 1 << value;
+		}
+		return res;
+	}
+};
+
+void HIDPP10Device::loadTemporaryProfile (const std::map<std::string, setting_t> &settings,
+					  const std::vector<std::map<std::string, button_t>> &buttons,
+					  const std::vector<std::map<std::string, setting_t>> &modes)
+{
+	HIDPP::Profile profile;
+	auto profile_format = HIDPP10::getProfileFormat (&_device);
+
+	const auto &general_settings = profile_format->generalSettings ();
+	for (const auto &[name, value]: settings) {
+		auto it = general_settings.find (name);
+		if (it == general_settings.end ()) {
+			Log::warning () << "Ignoring unknown setting: " << name << std::endl;
+			continue;
+		}
+		SettingConvert convert { it->second };
+		profile.settings.emplace (name, std::visit (convert, value));
+	}
+
+	for (const auto button_props: buttons) {
+		auto &button = profile.buttons.emplace_back ();
+		uint8_t modifiers = 0, key = 0;
+		for (const auto &[name, value]: button_props) {
+			if (name == "mouse-buttons") {
+				button.setMouseButtons (std::visit (BitField<uint16_t> (), value));
+			}
+			else if (name == "key") {
+				key = std::get<int> (value);
+			}
+			else if (name == "modifiers") {
+				modifiers = std::visit (BitField<uint8_t> (), value);
+			}
+			else if (name == "special") {
+				button.setSpecial (std::get<int> (value));
+			}
+			else if (name == "consumer-control") {
+				button.setConsumerControl (std::get<int> (value));
+			}
+			else
+				Log::warning () << "Ignoring unknown button value: " << name << std::endl;
+		}
+		if (key || modifiers)
+			button.setKey (modifiers, key);
+	}
+
+	const auto &mode_settings = profile_format->modeSettings ();
+	for (const auto mode: modes) {
+		auto &current = profile.modes.emplace_back ();
+		for (const auto &[name, value]: mode) {
+			auto it = mode_settings.find (name);
+			if (it == mode_settings.end ()) {
+				Log::warning () << "Ignoring unknown mode setting: " << name << std::endl;
+				continue;
+			}
+			SettingConvert convert { it->second };
+			current.emplace (name, std::visit (convert, value));
+		}
+	}
+
+	HIDPP10::RAMMapping memory (&_device);
+	HIDPP::Address addr { 0, 0, 0 };
+	profile_format->write (profile, memory.getWritableIterator (addr));
+	memory.sync ();
+	HIDPP10::IProfile (&_device).loadProfileFromAddress (addr);
+}
+
+void HIDPP10Device::loadProfileFromIndex (unsigned int index)
+{
+	HIDPP10::IProfile (&_device).loadProfileFromIndex (index);
+}
+
 const JSClass HIDPP10Device::js_class = jstpl::make_class<HIDPP10Device> ("HIDPP10Device");
 
 const JSFunctionSpec HIDPP10Device::js_fs[] = {
@@ -168,6 +301,8 @@ const JSFunctionSpec HIDPP10Device::js_fs[] = {
 	jstpl::make_method<&HIDPP10Device::setIndividualFeatureFlags> ("setIndividualFeatureFlags"),
 	jstpl::make_method<&HIDPP10Device::getCurrentResolution> ("getCurrentResolution"),
 	jstpl::make_method<&HIDPP10Device::setCurrentResolution> ("setCurrentResolution"),
+	jstpl::make_method<&HIDPP10Device::loadTemporaryProfile> ("loadTemporaryProfile"),
+	jstpl::make_method<&HIDPP10Device::loadProfileFromIndex> ("loadProfileFromIndex"),
 	JS_FS_END
 };
 
@@ -180,7 +315,7 @@ const JSFunctionSpec HIDPP10Device::js_fs[] = {
 	#interface_name "_" #enum_name "_" #value_name, \
 	HIDPP10::I##interface_name::enum_name::value_name \
 }
-#define DEFINE_CONSTANT(value) { #value, value }
+#define DEFINE_ENUM(type, value) { #type "_" #value, static_cast<int> (type::value) }
 const std::pair<std::string, int> HIDPP10Device::js_int_const[] = {
 	DEFINE_HIDPP_REGISTER_ADDRESS(EnableNotifications),
 	DEFINE_HIDPP_REGISTER_ADDRESS(EnableIndividualFeatures),
@@ -209,6 +344,30 @@ const std::pair<std::string, int> HIDPP10Device::js_int_const[] = {
 	DEFINE_HIDPP_CONSTANT(IndividualFeatures, InhibitLockKeySound),
 	DEFINE_HIDPP_CONSTANT(IndividualFeatures, MXAir3DEngine),
 	DEFINE_HIDPP_CONSTANT(IndividualFeatures, LEDControl),
+	DEFINE_ENUM(Modifier, LeftControl),
+	DEFINE_ENUM(Modifier, LeftShift),
+	DEFINE_ENUM(Modifier, LeftAlt),
+	DEFINE_ENUM(Modifier, LeftMeta),
+	DEFINE_ENUM(Modifier, RightControl),
+	DEFINE_ENUM(Modifier, RightShift),
+	DEFINE_ENUM(Modifier, RightAlt),
+	DEFINE_ENUM(Modifier, RightMeta),
+	DEFINE_ENUM(SpecialAction, WheelLeft),
+	DEFINE_ENUM(SpecialAction, WheelRight),
+	DEFINE_ENUM(SpecialAction, BatteryLevel),
+	DEFINE_ENUM(SpecialAction, ResolutionNext),
+	DEFINE_ENUM(SpecialAction, ResolutionCycleNext),
+	DEFINE_ENUM(SpecialAction, ResolutionPrev),
+	DEFINE_ENUM(SpecialAction, ResolutionCyclePrev),
+	DEFINE_ENUM(SpecialAction, ProfileNext),
+	DEFINE_ENUM(SpecialAction, ProfileCycleNext),
+	DEFINE_ENUM(SpecialAction, ProfilePrev),
+	DEFINE_ENUM(SpecialAction, ProfileCyclePrev),
+	DEFINE_ENUM(SpecialAction, ProfileSwitch0),
+	DEFINE_ENUM(SpecialAction, ProfileSwitch1),
+	DEFINE_ENUM(SpecialAction, ProfileSwitch2),
+	DEFINE_ENUM(SpecialAction, ProfileSwitch3),
+	DEFINE_ENUM(SpecialAction, ProfileSwitch4),
 	{ "", 0 }
 };
 
